@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
 
 enum AboutStatus {
   initial,
@@ -24,6 +25,28 @@ class About {
     required this.createdAt,
     required this.updatedAt,
   });
+
+  factory About.fromJson(Map<String, dynamic> json) {
+    return About(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      description: json['description'] as String,
+      resumeUrl: json['resumeUrl'] as String?,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'resumeUrl': resumeUrl,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+    };
+  }
 }
 
 class AboutState {
@@ -101,6 +124,18 @@ class AboutNotifier extends StateNotifier<AboutState> {
 }
 
 // Providers
+final dioProvider = Provider<Dio>((ref) {
+  return Dio(BaseOptions(
+    baseUrl: 'http://localhost:3000/api',
+    connectTimeout: const Duration(seconds: 30),
+    receiveTimeout: const Duration(seconds: 30),
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+  ));
+});
+
 final aboutNotifierProvider = StateNotifierProvider<AboutNotifier, AboutState>((ref) {
   final dio = ref.watch(dioProvider);
   return AboutNotifier(dio);

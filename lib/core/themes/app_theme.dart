@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  static const String fontInter = 'Inter';
-  
   // Light Theme Colors
   static const Color lightPrimaryColor = Color(0xFF6366F1);
   static const Color lightSecondaryColor = Color(0xFF8B5CF6);
@@ -19,41 +18,35 @@ class AppTheme {
   static const Color darkOnSurfaceColor = Color(0xFFF1F5F9);
   static const Color darkOnBackgroundColor = Color(0xFFF1F5F9);
   
-  // Text Styles
-  static const TextStyle headline1 = TextStyle(
+  // Text Styles using Google Fonts
+  static TextStyle get headline1 => GoogleFonts.inter(
     fontSize: 32,
     fontWeight: FontWeight.bold,
-    fontFamily: fontInter,
   );
   
-  static const TextStyle headline2 = TextStyle(
+  static TextStyle get headline2 => GoogleFonts.inter(
     fontSize: 28,
     fontWeight: FontWeight.bold,
-    fontFamily: fontInter,
   );
   
-  static const TextStyle headline3 = TextStyle(
+  static TextStyle get headline3 => GoogleFonts.inter(
     fontSize: 24,
     fontWeight: FontWeight.w600,
-    fontFamily: fontInter,
   );
   
-  static const TextStyle bodyLarge = TextStyle(
+  static TextStyle get bodyLarge => GoogleFonts.inter(
     fontSize: 16,
     fontWeight: FontWeight.normal,
-    fontFamily: fontInter,
   );
   
-  static const TextStyle bodyMedium = TextStyle(
+  static TextStyle get bodyMedium => GoogleFonts.inter(
     fontSize: 14,
     fontWeight: FontWeight.normal,
-    fontFamily: fontInter,
   );
   
-  static const TextStyle bodySmall = TextStyle(
+  static TextStyle get bodySmall => GoogleFonts.inter(
     fontSize: 12,
     fontWeight: FontWeight.normal,
-    fontFamily: fontInter,
   );
   
   // Spacing
@@ -121,7 +114,7 @@ class AppTheme {
         ),
       ),
     ),
-    textTheme: const TextTheme(
+    textTheme: TextTheme(
       headlineLarge: headline1,
       headlineMedium: headline2,
       headlineSmall: headline3,
@@ -166,7 +159,7 @@ class AppTheme {
         ),
       ),
     ),
-    textTheme: const TextTheme(
+    textTheme: TextTheme(
       headlineLarge: headline1,
       headlineMedium: headline2,
       headlineSmall: headline3,

@@ -6,8 +6,9 @@ class AboutScreen extends ConsumerWidget {
   const AboutScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final aboutState = ref.watch(aboutStateProvider);
+    final aboutNotifier = ref.read(aboutNotifierProvider.notifier);
     
     return Scaffold(
       appBar: AppBar(
@@ -16,13 +17,13 @@ class AboutScreen extends ConsumerWidget {
         elevation: 0,
       ),
       body: RefreshIndicator(
-        onRefresh: () {
-          ref.read(aboutNotifierProvider.notifier).getAbout();
+        onRefresh: () async {
+          await aboutNotifier.getAbout();
         },
         child: aboutState.status == AboutStatus.loading
             ? const Center(child: CircularProgressIndicator())
             : aboutState.status == AboutStatus.error
-                ? _buildErrorWidget(aboutState.errorMessage!)
+                ? _buildErrorWidget(aboutState.errorMessage!, aboutNotifier)
                 : _buildAboutContent(aboutState.about!),
       ),
     );
@@ -45,11 +46,12 @@ class AboutScreen extends ConsumerWidget {
           
           Text(
             about.description,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               height: 1.5,
               color: Colors.grey[700],
             ),
+          ),
           const SizedBox(height: 24),
           
           if (about.resumeUrl != null)
@@ -81,12 +83,12 @@ class AboutScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildErrorWidget(String errorMessage) {
+  Widget _buildErrorWidget(String errorMessage, AboutNotifier aboutNotifier) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
+          const Icon(
             Icons.error_outline,
             size: 64,
             color: Colors.red,
@@ -103,7 +105,7 @@ class AboutScreen extends ConsumerWidget {
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {
-              ref.read(aboutNotifierProvider.notifier).getAbout();
+              aboutNotifier.getAbout();
             },
             child: const Text('Retry'),
           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
 
 enum EducationStatus {
   initial,
@@ -30,6 +31,34 @@ class Education {
     required this.createdAt,
     required this.updatedAt,
   });
+
+  factory Education.fromJson(Map<String, dynamic> json) {
+    return Education(
+      id: json['id'] as String,
+      institution: json['institution'] as String,
+      degree: json['degree'] as String,
+      field: json['field'] as String,
+      startDate: DateTime.parse(json['startDate'] as String),
+      endDate: json['endDate'] != null ? DateTime.parse(json['endDate'] as String) : null,
+      description: json['description'] as String?,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'institution': institution,
+      'degree': degree,
+      'field': field,
+      'startDate': startDate.toIso8601String(),
+      'endDate': endDate?.toIso8601String(),
+      'description': description,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+    };
+  }
 }
 
 class EducationState {
@@ -89,6 +118,18 @@ class EducationNotifier extends StateNotifier<EducationState> {
 }
 
 // Providers
+final dioProvider = Provider<Dio>((ref) {
+  return Dio(BaseOptions(
+    baseUrl: 'http://localhost:3000/api',
+    connectTimeout: const Duration(seconds: 30),
+    receiveTimeout: const Duration(seconds: 30),
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+  ));
+});
+
 final educationNotifierProvider = StateNotifierProvider<EducationNotifier, EducationState>((ref) {
   final dio = ref.watch(dioProvider);
   return EducationNotifier(dio);

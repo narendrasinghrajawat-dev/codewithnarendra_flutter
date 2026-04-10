@@ -224,12 +224,12 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
       
       await ref.read(projectNotifierProvider.notifier).addProject(Project(
         id: '', // Will be set by backend
-        title: projectData['title'],
-        description: projectData['description'],
-        technologies: projectData['technologies'],
-        images: [], // Will be uploaded separately
-        projectUrl: projectData['projectUrl'],
-        repositoryUrl: projectData['repositoryUrl'],
+        title: projectData['title'] as String,
+        description: projectData['description'] as String,
+        technologies: List<String>.from(projectData['technologies'] as List),
+        images: List<String>.from(projectData['images'] as List),
+        projectUrl: projectData['projectUrl'] as String,
+        repositoryUrl: projectData['repositoryUrl'] as String,
         createdBy: '', // Will be set by backend
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),

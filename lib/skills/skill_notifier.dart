@@ -26,6 +26,30 @@ class Skill {
     required this.createdAt,
     required this.updatedAt,
   });
+
+  factory Skill.fromJson(Map<String, dynamic> json) {
+    return Skill(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      level: json['level'] as String,
+      category: json['category'] as String,
+      yearsOfExperience: json['yearsOfExperience'] as int?,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'level': level,
+      'category': category,
+      'yearsOfExperience': yearsOfExperience,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+    };
+  }
 }
 
 class SkillState {
@@ -85,6 +109,18 @@ class SkillNotifier extends StateNotifier<SkillState> {
 }
 
 // Providers
+final dioProvider = Provider<Dio>((ref) {
+  return Dio(BaseOptions(
+    baseUrl: 'http://localhost:3000/api',
+    connectTimeout: const Duration(seconds: 30),
+    receiveTimeout: const Duration(seconds: 30),
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+  ));
+});
+
 final skillNotifierProvider = StateNotifierProvider<SkillNotifier, SkillState>((ref) {
   final dio = ref.watch(dioProvider);
   return SkillNotifier(dio);

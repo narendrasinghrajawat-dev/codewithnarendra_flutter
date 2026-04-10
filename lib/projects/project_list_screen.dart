@@ -8,8 +8,9 @@ class ProjectListScreen extends ConsumerWidget {
   const ProjectListScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final projectState = ref.watch(projectStateProvider);
+    final projectNotifier = ref.read(projectNotifierProvider.notifier);
     
     return Scaffold(
       appBar: AppBar(
@@ -26,13 +27,13 @@ class ProjectListScreen extends ConsumerWidget {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () {
-          ref.read(projectNotifierProvider.notifier).getProjects();
+        onRefresh: () async {
+          await projectNotifier.getProjects();
         },
         child: projectState.status == ProjectStatus.loading
             ? const Center(child: CircularProgressIndicator())
             : projectState.status == ProjectStatus.error
-                ? _buildErrorWidget(projectState.errorMessage!)
+                ? _buildErrorWidget(projectState.errorMessage!, projectNotifier)
                 : _buildProjectList(projectState.projects!),
       ),
       floatingActionButton: FloatingActionButton(
@@ -87,7 +88,7 @@ class ProjectListScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildErrorWidget(String errorMessage) {
+  Widget _buildErrorWidget(String errorMessage, ProjectNotifier projectNotifier) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -109,7 +110,7 @@ class ProjectListScreen extends ConsumerWidget {
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {
-              ref.read(projectNotifierProvider.notifier).getProjects();
+              projectNotifier.getProjects();
             },
             child: const Text('Retry'),
           ),
@@ -194,7 +195,7 @@ class ProjectCard extends StatelessWidget {
                 children: project.technologies
                     .take(3)
                     .map((tech) => Chip(
-                          label: tech,
+                          label: Text(tech),
                           backgroundColor: Colors.blue.shade100,
                           labelStyle: const TextStyle(fontSize: 12),
                         ))

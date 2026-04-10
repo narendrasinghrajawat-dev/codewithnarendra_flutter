@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:form_validator/form_validator.dart';
 import 'auth_notifier.dart';
 
@@ -81,7 +80,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your email';
                   }
-                  if (!EmailValidator.validate(value!)) {
+                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value!)) {
                     return 'Please enter a valid email';
                   }
                   return null;

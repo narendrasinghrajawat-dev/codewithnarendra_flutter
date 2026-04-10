@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum AuthStatus {
   initial,
@@ -53,20 +52,19 @@ class AuthState {
           displayName == other.displayName;
 
   @override
-  int get hashCode => Object.hash(status.hashCode ^ errorMessage.hashCode ^ userId.hashCode ^ email.hashCode ^ displayName.hashCode);
+  int get hashCode => Object.hash(status, errorMessage, userId, email, displayName);
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final FirebaseAuth _auth;
-  final FirebaseFirestore _firestore;
   
-  AuthNotifier(this._auth, this._firestore) : super(const AuthState(status: AuthStatus.initial));
+  AuthNotifier(this._auth) : super(const AuthState(status: AuthStatus.initial));
 
   Future<void> signInWithEmail(String email, String password) async {
     state = state.copyWith(status: AuthStatus.loading);
     
     try {
-      final UserCredential result = await _auth.signInWithEmailAndPassword(
+      final result = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -79,14 +77,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
           email: user.email,
           displayName: user.displayName,
         );
-        
-        // Store user data in Firestore
-        await _firestore.collection('users').doc(user.uid).set({
-          'email': user.email,
-          'displayName': user.displayName,
-          'createdAt': FieldValue.serverTimestamp(),
-          'lastLogin': FieldValue.serverTimestamp(),
-        });
       }
     } catch (e) {
       state = state.copyWith(
@@ -100,7 +90,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(status: AuthStatus.loading);
     
     try {
-      final UserCredential result = await _auth.createUserWithEmailAndPassword(
+      final result = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -116,14 +106,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
           email: user.email,
           displayName: displayName,
         );
-        
-        // Store user data in Firestore
-        await _firestore.collection('users').doc(user.uid).set({
-          'email': user.email,
-          'displayName': displayName,
-          'createdAt': FieldValue.serverTimestamp(),
-          'lastLogin': FieldValue.serverTimestamp(),
-        });
       }
     } catch (e) {
       state = state.copyWith(
@@ -136,7 +118,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> signOut() async {
     try {
       await _auth.signOut();
-      state = const AuthState(status: AuthStatus.unauthenticated);
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        userId: null,
+        email: null,
+        displayName: null,
+      );
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.error,
@@ -182,12 +169,16 @@ final authServiceProvider = Provider<FirebaseAuth>((ref) {
 });
 
 final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  final auth = ref.watch(authServiceProvider);
-  return AuthNotifier(auth, FirebaseFirestore.instance);
+  final auth = FirebaseAuth.instance;
+  return AuthNotifier(auth);
 });
 
 final authStateProvider = Provider<AuthState>((ref) {
   return ref.watch(authNotifierProvider);
+});
+
+final authUserProvider = Provider<User?>((ref) {
+  return FirebaseAuth.instance.currentUser;
 });
 
 final isAuthenticatedProvider = Provider<bool>((ref) {

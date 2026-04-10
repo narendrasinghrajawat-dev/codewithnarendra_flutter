@@ -184,7 +184,7 @@ class PortfolioPage extends ConsumerWidget {
                     width: double.infinity,
                     placeholder: (context, url) => Container(
                       color: Colors.grey[300],
-                      child: const Icon(
+                      child: Icon(
                         Icons.image,
                         size: 48,
                         color: Colors.grey[600],
@@ -192,7 +192,7 @@ class PortfolioPage extends ConsumerWidget {
                     ),
                     errorWidget: (context, url, error) => Container(
                       color: Colors.grey[300],
-                      child: const Icon(
+                      child: Icon(
                         Icons.broken_image,
                         size: 48,
                         color: Colors.grey[600],

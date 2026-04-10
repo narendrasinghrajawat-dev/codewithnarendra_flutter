@@ -19,6 +19,8 @@ class UserEntity with _$UserEntity {
     bool? isAdmin,
   }) = _UserEntity;
   
+  const UserEntity._();
+  
   String get fullName => '$firstName $lastName';
   
   bool get hasAvatar => avatarUrl != null && avatarUrl!.isNotEmpty;

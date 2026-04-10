@@ -37,6 +37,40 @@ class Project {
     required this.updatedAt,
   });
 
+  factory Project.fromJson(Map<String, dynamic> json) {
+    return Project(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      description: json['description'] as String,
+      technologies: List<String>.from(json['technologies'] as List),
+      images: List<String>.from(json['images'] as List),
+      projectUrl: json['projectUrl'] as String,
+      repositoryUrl: json['repositoryUrl'] as String,
+      isFeatured: json['isFeatured'] as bool? ?? false,
+      sortOrder: json['sortOrder'] as int? ?? 0,
+      createdBy: json['createdBy'] as String,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'technologies': technologies,
+      'images': images,
+      'projectUrl': projectUrl,
+      'repositoryUrl': repositoryUrl,
+      'isFeatured': isFeatured,
+      'sortOrder': sortOrder,
+      'createdBy': createdBy,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+    };
+  }
+
   Project copyWith({
     String? title,
     String? description,
@@ -280,8 +314,16 @@ final projectApiServiceProvider = Provider<ProjectApiService>((ref) {
 });
 
 final projectNotifierProvider = StateNotifierProvider<ProjectNotifier, ProjectState>((ref) {
-  final apiService = ref.watch(projectApiServiceProvider);
-  return ProjectNotifier(apiService);
+  final dio = Dio(BaseOptions(
+    baseUrl: 'http://localhost:3000/api',
+    connectTimeout: const Duration(seconds: 30),
+    receiveTimeout: const Duration(seconds: 30),
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+  ));
+  return ProjectNotifier(dio);
 });
 
 final projectStateProvider = Provider<ProjectState>((ref) {

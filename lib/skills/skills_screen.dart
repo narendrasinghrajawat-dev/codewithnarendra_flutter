@@ -6,8 +6,9 @@ class SkillsScreen extends ConsumerWidget {
   const SkillsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final skillState = ref.watch(skillStateProvider);
+    final skillNotifier = ref.read(skillNotifierProvider.notifier);
     
     return Scaffold(
       appBar: AppBar(
@@ -16,13 +17,13 @@ class SkillsScreen extends ConsumerWidget {
         elevation: 0,
       ),
       body: RefreshIndicator(
-        onRefresh: () {
-          ref.read(skillNotifierProvider.notifier).getSkills();
+        onRefresh: () async {
+          await skillNotifier.getSkills();
         },
         child: skillState.status == SkillStatus.loading
             ? const Center(child: CircularProgressIndicator())
             : skillState.status == SkillStatus.error
-                ? _buildErrorWidget(skillState.errorMessage!)
+                ? _buildErrorWidget(skillState.errorMessage!, skillNotifier)
                 : _buildSkillsList(skillState.skills!),
       ),
     );
@@ -98,6 +99,7 @@ class SkillsScreen extends ConsumerWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -139,12 +141,12 @@ class SkillsScreen extends ConsumerWidget {
     }
   }
 
-  Widget _buildErrorWidget(String errorMessage) {
+  Widget _buildErrorWidget(String errorMessage, SkillNotifier skillNotifier) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
+          const Icon(
             Icons.error_outline,
             size: 64,
             color: Colors.red,
@@ -161,7 +163,7 @@ class SkillsScreen extends ConsumerWidget {
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {
-              ref.read(skillNotifierProvider.notifier).getSkills();
+              skillNotifier.getSkills();
             },
             child: const Text('Retry'),
           ),

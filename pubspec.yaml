@@ -28,6 +28,9 @@ dependencies:
   dio: ^5.4.3+1
   retrofit: ^4.1.0
   json_annotation: ^4.9.0
+  file_picker: ^8.1.2
+  firebase_storage: ^12.3.6
+  intl: ^0.19.0
   
   # Local Storage
   shared_preferences: ^2.2.3
@@ -43,6 +46,7 @@ dependencies:
   material_symbols_icons: ^4.2719.3
   cached_network_image: ^3.3.1
   image_picker: ^1.1.2
+  google_fonts: ^6.2.1
   
   # Utilities
   equatable: ^2.0.5
@@ -80,17 +84,6 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/l10n/
-  
-  fonts:
-    - family: Inter
-      fonts:
-        - asset: assets/fonts/Inter-Regular.ttf
-        - asset: assets/fonts/Inter-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/Inter-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/Inter-Bold.ttf
-          weight: 700
 
 flutter_intl:
   enabled: true
