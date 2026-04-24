@@ -53,3 +53,4 @@ firebase_options.dart
 
 # env file
 .env        # Ignores the active environment file in root
+env/        # Ignores the env folder
