@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/project_entity.dart';
 import '../domain/portfolio_repository.dart';
-import '../../../core/exceptions/app_exceptions.dart';
 
 class PortfolioState {
   final bool isLoading;

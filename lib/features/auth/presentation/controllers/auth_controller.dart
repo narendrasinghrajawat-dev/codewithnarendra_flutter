@@ -80,7 +80,6 @@ class AuthController extends StateNotifier<AuthState> {
 
       final tokens = response['tokens'] as Map<String, dynamic>;
       final accessToken = tokens['accessToken'] as String;
-      final refreshToken = tokens['refreshToken'] as String;
 
       // Set auth token in network service
       _networkService.setAuthToken(accessToken);
@@ -123,7 +122,6 @@ class AuthController extends StateNotifier<AuthState> {
 
       final tokens = response['tokens'] as Map<String, dynamic>;
       final accessToken = tokens['accessToken'] as String;
-      final refreshToken = tokens['refreshToken'] as String;
 
       // Set auth token in network service
       _networkService.setAuthToken(accessToken);
