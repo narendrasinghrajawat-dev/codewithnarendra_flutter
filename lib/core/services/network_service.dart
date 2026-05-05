@@ -61,7 +61,13 @@ class NetworkService {
         onError: (error, handler) {
           final exception = _handleError(error);
           print('Error: ${exception.toString()}');
-          handler.reject(error);
+          // Create new DioException with the converted error
+          final convertedError = DioException(
+            requestOptions: error.requestOptions,
+            error: exception,
+            type: error.type,
+          );
+          handler.reject(convertedError);
         },
       ),
     );
@@ -131,8 +137,6 @@ class NetworkService {
   }) async {
 
     print('GET called: $path');
-
-
     try {
       return await _dio.get<T>(
         path,
@@ -151,7 +155,8 @@ class NetworkService {
     Options? options,
   }) async {
     print('POST called: $path');
-    
+    print('POST data: $data');
+
     try {
       return await _dio.post<T>(
         path,
@@ -161,7 +166,7 @@ class NetworkService {
       );
     } on DioException catch (e) {
       throw _handleError(e);
-    } 
+    }
   }
   
   Future<Response<T>> put<T>(
