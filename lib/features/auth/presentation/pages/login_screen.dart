@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/widgets/common_text.dart';
 import '../../../../core/widgets/common_text_field.dart';
 import '../../../../core/widgets/common_button.dart';
@@ -269,7 +270,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         ),
         TextButton(
           onPressed: () {
-            // TODO: Navigate to register
+            GoRouter.of(context).push('/register');
           },
           child: CommonText.small(
             l10n.authRegister,

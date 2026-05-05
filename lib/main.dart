@@ -9,6 +9,7 @@ import 'core/providers/language_provider.dart';
 import 'core/config/env_config.dart';
 import 'features/auth/presentation/controllers/auth_controller.dart';
 import 'features/auth/presentation/pages/login_screen.dart';
+import 'features/auth/presentation/pages/register_screen.dart';
 import 'features/admin/presentation/pages/admin_login_screen.dart';
 import 'features/admin/presentation/pages/admin_dashboard_screen.dart';
 import 'features/projects/presentation/pages/project_screen.dart';
@@ -61,6 +62,10 @@ class MyApp extends ConsumerWidget {
           GoRoute(
             path: '/login',
             builder: (context, state) => const LoginScreen(),
+          ),
+          GoRoute(
+            path: '/register',
+            builder: (context, state) => const RegisterScreen(),
           ),
           
           // Admin Auth Routes
