@@ -15,15 +15,27 @@ class EnvConfig {
     if (_isInitialized) return;
     
     try {
-      await dotenv.load();
+      // Try to load from root directory first
+      await dotenv.load(fileName: '.env');
       _isInitialized = true;
       print('Environment loaded from .env');
       print('API Base URL: ${apiBaseUrl}');
       print('Environment: ${env}');
     } catch (e) {
-      print('Error loading environment: $e');
-      // Fallback to default values
-      _isInitialized = true;
+      print('Error loading .env from root: $e');
+      try {
+        // Try to load from env/ directory
+        await dotenv.load(fileName: 'env/.env.dev');
+        _isInitialized = true;
+        print('Environment loaded from env/.env.dev');
+        print('API Base URL: ${apiBaseUrl}');
+        print('Environment: ${env}');
+      } catch (e2) {
+        print('Error loading env/.env.dev: $e2');
+        // Fallback to default values
+        _isInitialized = true;
+        print('Using default environment values');
+      }
     }
   }
 
