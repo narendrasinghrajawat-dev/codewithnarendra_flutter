@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/common_text.dart';
 import '../../../../core/widgets/common_text_field.dart';
@@ -295,33 +296,41 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   }
 
   Widget _buildLoginLink(AppLocalizations l10n) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        CommonText.small(
-          l10n.authAlreadyHaveAccount,
-        ),
-        TextButton(
-          onPressed: () {
-            // TODO: Navigate to login
-          },
-          child: CommonText.small(
-            l10n.authSignInInstead,
-            color: AppColors.primary,
-            fontWeight: FontWeight.w600,
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CommonText.small(
+            l10n.authAlreadyHaveAccount,
           ),
-        ),
-      ],
+          TextButton(
+            onPressed: () {
+              GoRouter.of(context).push('/login');
+            },
+            child: CommonText.small(
+              l10n.authSignInInstead,
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Future<void> _handleSubmit() async {
+
+    print(" handleSubmit called");
     if (_formKey.currentState?.validate() ?? false) {
       final notifier = ref.read(authControllerProvider.notifier);
       final displayName = _displayNameController.text.trim();
       final nameParts = displayName.split(' ');
       final firstName = nameParts.isNotEmpty ? nameParts[0] : '';
       final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+      
+      
+      print("Submitting registration with: email=${_emailController.text.trim()}, password=${_passwordController.text}, firstName=$firstName, lastName=$lastName"); 
       
       await notifier.register(
         email: _emailController.text.trim(),
