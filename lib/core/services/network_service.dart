@@ -25,12 +25,17 @@ class NetworkService {
   
   void _updateBaseUrlFromEnv() {
     try {
-      _dio.options.baseUrl = EnvConfig.apiBaseUrl;
-      _dio.options.connectTimeout = Duration(milliseconds: EnvConfig.apiTimeout);
-      _dio.options.receiveTimeout = Duration(milliseconds: EnvConfig.apiTimeout);
-      _dio.options.sendTimeout = Duration(milliseconds: EnvConfig.apiTimeout);
+      final baseUrl = EnvConfig.apiBaseUrl;
+      final timeout = EnvConfig.apiTimeout;
+      _dio.options.baseUrl = baseUrl;
+      _dio.options.connectTimeout = Duration(milliseconds: timeout);
+      _dio.options.receiveTimeout = Duration(milliseconds: timeout);
+      _dio.options.sendTimeout = Duration(milliseconds: timeout);
+      print('Base URL set to: $baseUrl');
     } catch (e) {
       print('Error updating base URL from env: $e');
+      print('Using default base URL: http://localhost:3000/api');
+      _dio.options.baseUrl = 'http://localhost:3000/api';
     }
   }
   
