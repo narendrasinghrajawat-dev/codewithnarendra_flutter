@@ -1,3 +1,5 @@
+import 'dart:io';
+
 /// Environment Configuration
 /// Uses hardcoded values for development
 /// For production deployment, update these values directly
@@ -14,7 +16,15 @@ class EnvConfig {
   static String get env => 'development';
 
   /// API Base URL
-  static String get apiBaseUrl => 'http://localhost:3000/api';
+  /// For Android emulator: uses 10.0.2.2 (special IP for host localhost)
+  /// For other platforms: uses localhost
+  static String get apiBaseUrl {
+    if (Platform.isAndroid) {
+      // Android emulator uses 10.0.2.2 to access host's localhost
+      return 'http://10.0.2.2:3000/api';
+    }
+    return 'http://localhost:3000/api';
+  }
 
   /// API Timeout in milliseconds
   static int get apiTimeout => 30000;
