@@ -24,12 +24,13 @@ void main() async {
   // Initialize environment configuration
   await EnvConfig.init();
   
-  // Initialize Firebase (optional - can be removed if using JWT auth)
+  // Initialize Firebase (optional - app works without it for JWT auth)
   try {
     await Firebase.initializeApp();
+    debugPrint('Firebase initialized successfully');
   } catch (e) {
     // Firebase initialization failed - app will work without it for JWT auth
-    debugPrint('Firebase initialization failed: $e');
+    debugPrint('Firebase initialization failed (app will continue without Firebase): $e');
   }
   
   runApp(
