@@ -58,6 +58,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+
+    // Listen for auth state changes and give user feedback
+    ref.listen<AuthState>(authControllerProvider, (previous, next) {
+      if (next.status == AuthStatus.authenticated) {
+        context.go('/portfolio');
+      } else if (next.status == AuthStatus.error && next.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.errorMessage!),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    });
+
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: ResponsiveLayout(

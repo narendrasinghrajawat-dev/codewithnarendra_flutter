@@ -54,6 +54,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     final authState = ref.watch(authControllerProvider);
     final l10n = AppLocalizations.of(context)!;
 
+    // Listen for auth state changes and navigate/show feedback
+    ref.listen<AuthState>(authControllerProvider, (previous, next) {
+      if (next.status == AuthStatus.authenticated) {
+        context.go('/portfolio');
+      } else if (next.status == AuthStatus.error && next.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.errorMessage!),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    });
+
     return Scaffold(
       backgroundColor: AppThemeColors.lightBackground,
       body: ResponsiveLayout(
@@ -228,7 +243,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         if (value == null || value.isEmpty) {
           return l10n.fieldRequired;
         }
-        if (value.length < 8) {
+        if (value.length < 6) {
           return l10n.fieldInvalidPassword;
         }
         return null;
@@ -285,15 +300,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   Future<void> _handleSubmit() async {
     if (_formKey.currentState?.validate() ?? false) {
       final controller = ref.read(authControllerProvider.notifier);
-      final success = await controller.login(
+      await controller.login(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-
-      if (success && mounted) {
-        // Navigate to home/portfolio
-        // TODO: Implement navigation
-      }
+      // Navigation is handled by ref.listen above
     }
   }
 }

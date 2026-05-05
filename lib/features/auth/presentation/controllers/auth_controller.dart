@@ -55,7 +55,9 @@ class AuthController extends StateNotifier<AuthState> {
   Future<void> _checkAuthStatus() async {
     try {
       state = state.copyWith(status: AuthStatus.loading);
-      final userData = await _authApiService.getCurrentUser();
+      final response = await _authApiService.getCurrentUser();
+      // Response shape: { success, message, data: { ...userFields } }
+      final userData = (response['data'] ?? response) as Map<String, dynamic>;
       state = state.copyWith(
         status: AuthStatus.authenticated,
         user: UserModel.fromMap(userData),
@@ -78,19 +80,17 @@ class AuthController extends StateNotifier<AuthState> {
         password: password,
       );
 
-      final tokens = response['tokens'] as Map<String, dynamic>;
+      // Response shape: { success, message, data: { ...userFields, tokens: { accessToken, refreshToken } } }
+      final data = (response['data'] ?? response) as Map<String, dynamic>;
+      final tokens = data['tokens'] as Map<String, dynamic>;
       final accessToken = tokens['accessToken'] as String;
 
       // Set auth token in network service
       _networkService.setAuthToken(accessToken);
 
-      // Store tokens locally (you can implement secure storage)
-      // TODO: Store tokens securely
-
-      final adminData = response['user'] as Map<String, dynamic>;
       state = state.copyWith(
         status: AuthStatus.authenticated,
-        user: UserModel.fromMap(adminData),
+        user: UserModel.fromMap(data),
       );
 
       return true;
@@ -121,16 +121,15 @@ class AuthController extends StateNotifier<AuthState> {
         lastName: lastName,
       );
 
-      final tokens = response['tokens'] as Map<String, dynamic>;
+      // Response shape: { success, message, data: { user: {...}, tokens: { accessToken, refreshToken } } }
+      final data = (response['data'] ?? response) as Map<String, dynamic>;
+      final tokens = data['tokens'] as Map<String, dynamic>;
       final accessToken = tokens['accessToken'] as String;
 
       // Set auth token in network service
       _networkService.setAuthToken(accessToken);
 
-      // Store tokens locally
-      // TODO: Store tokens securely
-
-      final userData = response['user'] as Map<String, dynamic>;
+      final userData = data['user'] as Map<String, dynamic>;
       state = state.copyWith(
         status: AuthStatus.authenticated,
         user: UserModel.fromMap(userData),

@@ -1,32 +1,76 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io' show Platform;
+
 /// Environment Configuration
-/// Uses hardcoded values for development
-/// For production deployment, update these values directly
+/// Auto-detects the correct backend URL based on the runtime platform:
+///   - Web (Chrome)       → http://localhost:3000/api
+///   - Android Emulator   → http://10.0.2.2:3000/api
+///   - iOS Simulator      → http://localhost:3000/api
+///   - Physical Device    → http://192.168.31.141:3000/api  (your PC's IP)
 class EnvConfig {
+  /// Your development machine's local network IP address.
+  /// Run 'ipconfig' on Windows → IPv4 Address
+  static const String _devMachineIp = '192.168.31.141';
+
+  /// Backend port
+  static const int _port = 3000;
+
   /// Initialize environment configuration
-  /// Call this in main.dart before runApp
   static Future<void> init() async {
     print('Environment configuration initialized');
     print('API Base URL: $apiBaseUrl');
     print('Environment: $env');
+    print('Platform: ${_platformName()}');
+  }
+
+  static String _platformName() {
+    if (kIsWeb) return 'Web';
+    if (Platform.isAndroid) return 'Android';
+    if (Platform.isIOS) return 'iOS';
+    if (Platform.isMacOS) return 'macOS';
+    if (Platform.isWindows) return 'Windows';
+    return 'Unknown';
   }
 
   /// Environment type
   static String get env => 'development';
 
-  /// API Base URL
-  /// IMPORTANT: For physical Android devices, update this to your computer's IP address
-  /// Example: 'http://192.168.31.141:3000/api'
-  ///
-  /// To find your IP address:
-  /// - Windows: Run 'ipconfig' in terminal, look for IPv4 Address
-  /// - Mac/Linux: Run 'ifconfig' or 'ip addr', look for inet address
-  ///
-  /// For Android emulator: use 'http://10.0.2.2:3000/api'
-  /// For iOS simulator: use 'http://localhost:3000/api'
-  static String get apiBaseUrl => 'http://localhost:3000/api';
+  /// API Base URL — automatically picks the right host per platform
+  static String get apiBaseUrl {
+    if (kIsWeb) {
+      // Running in Chrome — backend and browser share localhost
+      return 'http://localhost:$_port/api';
+    }
+
+    if (Platform.isAndroid) {
+      // ─────────────────────────────────────────────────────────────
+      // Option A: USB + adb reverse  (set useAdbReverse = true)
+      //   Run once in terminal:  adb reverse tcp:3000 tcp:3000
+      //   Phone treats localhost:3000 as the PC's backend — works even
+      //   when the router has AP-Isolation enabled.
+      //
+      // Option B: Same WiFi + LAN IP  (set useAdbReverse = false)
+      //   Requires router AP-Isolation to be OFF.
+      // ─────────────────────────────────────────────────────────────
+      const bool useAdbReverse = true; // ← adb reverse tcp:3000 tcp:3000 is active
+
+      if (useAdbReverse) {
+        return 'http://localhost:$_port/api'; // tunnelled via adb reverse
+      }
+      return 'http://$_devMachineIp:$_port/api'; // LAN WiFi
+    }
+
+    if (Platform.isIOS) {
+      // iOS simulator and physical device both reach host via LAN IP
+      return 'http://$_devMachineIp:$_port/api';
+    }
+
+    // Desktop (Windows / macOS / Linux) — same machine, use localhost
+    return 'http://localhost:$_port/api';
+  }
 
   /// API Timeout in milliseconds
-  static int get apiTimeout => 30000; 
+  static int get apiTimeout => 30000;
 
   /// Enable logging
   static bool get enableLogging => true;

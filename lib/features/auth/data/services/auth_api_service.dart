@@ -22,7 +22,7 @@ class AuthApiService {
           'password': password,
         },
       );
-      return response as Map<String, dynamic>;
+      return response.data as Map<String, dynamic>;
     } catch (e) {
       throw _handleAuthError(e);
     }
@@ -45,7 +45,7 @@ class AuthApiService {
           'lastName': lastName,
         },
       );
-      return response as Map<String, dynamic>;
+      return response.data as Map<String, dynamic>;
     } catch (e) {
       throw _handleAuthError(e);
     }
@@ -68,7 +68,7 @@ class AuthApiService {
       final response = await _networkService.get<Map<String, dynamic>>(
         ApiEndpoints.getCurrentUser,
       );
-      return response as Map<String, dynamic>;
+      return response.data as Map<String, dynamic>;
     } catch (e) {
       throw _handleAuthError(e);
     }
@@ -81,7 +81,7 @@ class AuthApiService {
         ApiEndpoints.getCurrentUser,
         data: data,
       );
-      return response as Map<String, dynamic>;
+      return response.data as Map<String, dynamic>;
     } catch (e) {
       throw _handleAuthError(e);
     }
