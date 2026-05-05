@@ -1,5 +1,3 @@
-import 'dart:io';
-
 /// Environment Configuration
 /// Uses hardcoded values for development
 /// For production deployment, update these values directly
@@ -16,15 +14,16 @@ class EnvConfig {
   static String get env => 'development';
 
   /// API Base URL
-  /// For Android emulator: uses 10.0.2.2 (special IP for host localhost)
-  /// For other platforms: uses localhost
-  static String get apiBaseUrl {
-    if (Platform.isAndroid) {
-      // Android emulator uses 10.0.2.2 to access host's localhost
-      return 'http://10.0.2.2:3000/api';
-    }
-    return 'http://localhost:3000/api';
-  }
+  /// IMPORTANT: For physical Android devices, update this to your computer's IP address
+  /// Example: 'http://192.168.1.100:3000/api'
+  ///
+  /// To find your IP address:
+  /// - Windows: Run 'ipconfig' in terminal, look for IPv4 Address
+  /// - Mac/Linux: Run 'ifconfig' or 'ip addr', look for inet address
+  ///
+  /// For Android emulator: use 'http://10.0.2.2:3000/api'
+  /// For iOS simulator: use 'http://localhost:3000/api'
+  static String get apiBaseUrl => 'http://192.168.1.100:3000/api'; // UPDATE THIS IP!
 
   /// API Timeout in milliseconds
   static int get apiTimeout => 30000;
