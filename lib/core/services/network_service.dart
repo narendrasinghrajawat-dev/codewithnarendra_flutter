@@ -116,7 +116,14 @@ class NetworkService {
       case DioExceptionType.cancel:
         return const NetworkException('Request cancelled');
       case DioExceptionType.connectionError:
-        return const NetworkException('Connection error');
+        print('Connection Error Details:');
+        print('  Message: ${error.message}');
+        print('  Error: ${error.error}');
+        print('  Request: ${error.requestOptions.uri}');
+        return NetworkException(
+          'Connection error: ${error.message ?? "Cannot connect to server"}',
+          details: error.error,
+        );
       case DioExceptionType.unknown:
         return NetworkException(
           error.message ?? 'Unknown network error',

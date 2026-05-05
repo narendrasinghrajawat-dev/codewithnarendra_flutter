@@ -15,7 +15,7 @@ class EnvConfig {
 
   /// API Base URL
   /// IMPORTANT: For physical Android devices, update this to your computer's IP address
-  /// Example: 'http://192.168.1.100:3000/api'
+  /// Example: 'http://192.168.31.141:3000/api'
   ///
   /// To find your IP address:
   /// - Windows: Run 'ipconfig' in terminal, look for IPv4 Address
@@ -23,10 +23,10 @@ class EnvConfig {
   ///
   /// For Android emulator: use 'http://10.0.2.2:3000/api'
   /// For iOS simulator: use 'http://localhost:3000/api'
-  static String get apiBaseUrl => 'http://192.168.1.100:3000/api'; // UPDATE THIS IP!
+  static String get apiBaseUrl => 'http://localhost:3000/api';
 
   /// API Timeout in milliseconds
-  static int get apiTimeout => 30000;
+  static int get apiTimeout => 30000; 
 
   /// Enable logging
   static bool get enableLogging => true;

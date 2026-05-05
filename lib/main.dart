@@ -24,7 +24,7 @@ void main() async {
   
   // Initialize environment configuration
   await EnvConfig.init();
-  
+
   // Initialize Firebase (optional - app works without it for JWT auth)
   try {
     await Firebase.initializeApp();
