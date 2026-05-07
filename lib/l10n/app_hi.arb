@@ -259,5 +259,18 @@
   "commonMaximize": "अधिकतम करें",
   "commonMinimize": "न्यूनतम करें",
   "commonFullscreen": "पूर्ण स्क्रीन",
-  "commonExitFullscreen": "पूर्ण स्क्रीन से बाहर"
+  "commonExitFullscreen": "पूर्ण स्क्रीन से बाहर",
+  "aboutDownloadCV": "सीवी डाउनलोड करें",
+  "aboutYearsExperience": "वर्षों का अनुभव",
+  "aboutProjectsCompleted": "पूरे किए गए प्रोजेक्ट",
+  "aboutHappyClients": "खुश ग्राहक",
+  "aboutMe": "मेरे बारे में",
+  "aboutMySkills": "मेरे कौशल",
+  "aboutServices": "सेवाएं",
+  "aboutGetInTouch": "संपर्क करें",
+  "aboutFollowMe": "मुझे फॉलो करें",
+  "aboutEmail": "ईमेल",
+  "aboutPhone": "फोन",
+  "aboutLocation": "स्थान",
+  "aboutWebsite": "वेबसाइट"
 }
