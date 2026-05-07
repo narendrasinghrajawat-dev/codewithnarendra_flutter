@@ -2,6 +2,8 @@ import 'package:codewithnarendra/core/constants/app_colors.dart';
 import 'package:codewithnarendra/core/constants/app_icons.dart';
 import 'package:codewithnarendra/core/constants/app_sizes.dart';
 import 'package:codewithnarendra/core/constants/app_strings.dart';
+import 'package:codewithnarendra/core/config/app_theme_colors.dart';
+import 'package:codewithnarendra/core/config/app_icons.dart' as app_icons;
 import 'package:codewithnarendra/features/about/presentation/providers/about_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,56 +17,126 @@ class AboutScreen extends ConsumerWidget {
     final aboutState = ref.watch(aboutStateProvider);
     final aboutNotifier = ref.read(aboutNotifierProvider.notifier);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.navAbout),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await aboutNotifier.getAbout();
-        },
-        child: aboutState.status == AboutStatus.loading
-            ? const Center(child: CircularProgressIndicator())
-            : aboutState.status == AboutStatus.error
-                ? _buildErrorWidget(aboutState.errorMessage!, aboutNotifier)
-                : aboutState.about != null
-                    ? _buildAboutContent(aboutState.about!)
-                    : _buildEmptyWidget(aboutNotifier),
-      ),
+    return RefreshIndicator(
+      onRefresh: () async {
+        await aboutNotifier.getAbout();
+      },
+      child: aboutState.status == AboutStatus.loading
+          ? const Center(child: CircularProgressIndicator())
+          : aboutState.status == AboutStatus.error
+              ? _buildErrorWidget(aboutState.errorMessage!, aboutNotifier)
+              : aboutState.about != null
+                  ? _buildAboutContent(aboutState.about!)
+                  : _buildEmptyWidget(aboutNotifier),
     );
   }
 
   Widget _buildAboutContent(about) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSizes.paddingLG),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Profile Section
+          Center(
+            child: Column(
+              children: [
+                app_icons.AppIcons.logoWithContainer(
+                  size: 120,
+                  backgroundColor: Colors.white,
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  about['title'] ?? 'Narendra',
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.darkOnBackground,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppThemeColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    'Full Stack Developer',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppThemeColors.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 32),
+
+          // Description Card
+          _buildSectionCard(
+            title: 'About Me',
+            child: Text(
+              about['description'] ?? 'No description available',
+              style: const TextStyle(
+                fontSize: 16,
+                height: 1.6,
+                color: AppColors.grey600,
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Resume Button
+          if (about['resumeUrl'] != null) _buildResumeButton(about['resumeUrl']),
+          if (about['resumeUrl'] != null) const SizedBox(height: 24),
+
+          // Contact Info Card
+          _buildContactInfo(about),
+          const SizedBox(height: 24),
+
+          // Social Links Card
+          _buildSocialLinks(about),
+          const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionCard({required String title, required Widget child}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            about.title,
+            title,
             style: const TextStyle(
-              fontSize: AppSizes.fontXXL,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
               color: AppColors.darkOnBackground,
             ),
           ),
-          const SizedBox(height: AppSizes.spacingLG),
-          Text(
-            about.description,
-            style: TextStyle(
-              fontSize: AppSizes.fontMD,
-              height: 1.5,
-              color: AppColors.grey600,
-            ),
-          ),
-          const SizedBox(height: AppSizes.spacingLG),
-          if (about.resumeUrl != null) _buildResumeButton(about.resumeUrl!),
-          const SizedBox(height: AppSizes.spacingLG),
-          _buildContactInfo(about),
-          const SizedBox(height: AppSizes.spacingLG),
-          _buildSocialLinks(about),
+          const SizedBox(height: 12),
+          child,
         ],
       ),
     );
@@ -89,27 +161,16 @@ class AboutScreen extends ConsumerWidget {
   }
 
   Widget _buildContactInfo(about) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Contact Information',
-          style: TextStyle(
-            fontSize: AppSizes.fontLG,
-            fontWeight: FontWeight.w600,
-            color: AppColors.darkOnBackground,
-          ),
-        ),
-        const SizedBox(height: AppSizes.spacingMD),
-        if (about.email != null)
-          _buildContactItem(AppIcons.email, about.email!),
-        if (about.phone != null)
-          _buildContactItem(AppIcons.phone, about.phone!),
-        if (about.location != null)
-          _buildContactItem(AppIcons.location, about.location!),
-        if (about.website != null)
-          _buildContactItem(AppIcons.website, about.website!),
-      ],
+    return _buildSectionCard(
+      title: 'Contact Information',
+      child: Column(
+        children: [
+          if (about['email'] != null) _buildContactItem(Icons.email, about['email']),
+          if (about['phone'] != null) _buildContactItem(Icons.phone, about['phone']),
+          if (about['location'] != null) _buildContactItem(Icons.location_on, about['location']),
+          if (about['website'] != null) _buildContactItem(Icons.language, about['website']),
+        ],
+      ),
     );
   }
 
@@ -133,42 +194,35 @@ class AboutScreen extends ConsumerWidget {
   }
 
   Widget _buildSocialLinks(about) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Social Links',
-          style: TextStyle(
-            fontSize: AppSizes.fontLG,
-            fontWeight: FontWeight.w600,
-            color: AppColors.darkOnBackground,
-          ),
-        ),
-        const SizedBox(height: AppSizes.spacingMD),
-        Wrap(
-          spacing: AppSizes.spacingMD,
-          children: [
-            if (about.linkedin != null)
-              _buildSocialButton(AppIcons.linkedin, about.linkedin!),
-            if (about.github != null)
-              _buildSocialButton(AppIcons.github, about.github!),
-            if (about.twitter != null)
-              _buildSocialButton(AppIcons.twitter, about.twitter!),
-          ],
-        ),
-      ],
+    return _buildSectionCard(
+      title: 'Social Links',
+      child: Wrap(
+        spacing: 12,
+        runSpacing: 12,
+        children: [
+          if (about['linkedin'] != null)
+            _buildSocialButton(Icons.link, about['linkedin'], 'LinkedIn'),
+          if (about['github'] != null)
+            _buildSocialButton(Icons.code, about['github'], 'GitHub'),
+          if (about['twitter'] != null)
+            _buildSocialButton(Icons.alternate_email, about['twitter'], 'Twitter'),
+        ],
+      ),
     );
   }
 
-  Widget _buildSocialButton(IconData icon, String url) {
-    return IconButton(
-      onPressed: () {
-        // TODO: Open social URL
-      },
-      icon: Icon(icon),
-      style: IconButton.styleFrom(
-        backgroundColor: AppColors.grey200,
-        foregroundColor: AppColors.darkOnBackground,
+  Widget _buildSocialButton(IconData icon, String url, String label) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppThemeColors.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: IconButton(
+        onPressed: () {
+          // TODO: Open social URL
+        },
+        icon: Icon(icon, color: AppThemeColors.primary),
+        tooltip: label,
       ),
     );
   }

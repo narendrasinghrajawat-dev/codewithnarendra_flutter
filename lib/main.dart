@@ -7,6 +7,8 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/language_provider.dart';
 import 'core/config/env_config.dart';
+import 'core/screens/splash_screen.dart';
+import 'core/screens/dashboard_screen.dart';
 import 'features/auth/presentation/controllers/auth_controller.dart';
 import 'features/auth/presentation/pages/login_screen.dart';
 import 'features/auth/presentation/pages/register_screen.dart';
@@ -28,10 +30,12 @@ void main() async {
   // Initialize Firebase (optional - app works without it for JWT auth)
   try {
     await Firebase.initializeApp();
-    debugPrint('Firebase initialized successfully');
+    debugPrint('✅ Firebase initialized successfully');
   } catch (e) {
     // Firebase initialization failed - app will work without it for JWT auth
-    debugPrint('Firebase initialization failed (app will continue without Firebase): $e');
+    debugPrint('⚠️ Firebase initialization failed (app will continue without Firebase): $e');
+    debugPrint('   Note: If using Firebase features, ensure firebase_options.dart exists in lib/');
+    debugPrint('   Run: flutterfire configure to generate firebase_options.dart');
   }
   
   runApp(
@@ -56,8 +60,13 @@ class MyApp extends ConsumerWidget {
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: GoRouter(
         navigatorKey: navigatorKey,
-        initialLocation: '/login',
+        initialLocation: '/splash',
         routes: [
+          // Splash Screen
+          GoRoute(
+            path: '/splash',
+            builder: (context, state) => const SplashScreen(),
+          ),
           // User Auth Routes
           GoRoute(
             path: '/login',
@@ -81,7 +90,7 @@ class MyApp extends ConsumerWidget {
           // Main App Routes
           GoRoute(
             path: '/portfolio',
-            builder: (context, state) => const PortfolioScreen(),
+            builder: (context, state) => const DashboardScreen(),
           ),
           GoRoute(
             path: '/projects',
@@ -180,7 +189,7 @@ class PortfolioScreen extends ConsumerWidget {
         ),
       ),
     );
-  }
+  } 
 
   Widget _buildQuickAction({
     required IconData icon,

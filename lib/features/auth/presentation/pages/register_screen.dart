@@ -7,6 +7,7 @@ import '../../../../core/widgets/common_text.dart';
 import '../../../../core/widgets/common_text_field.dart';
 import '../../../../core/widgets/common_button.dart';
 import '../../../../core/widgets/responsive_layout.dart';
+import '../../../../core/config/app_icons.dart';
 import '../controllers/auth_controller.dart';
   
 
@@ -173,10 +174,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
               ),
             ],
           ),
-          child: const Icon(
-            Icons.person_add,
-            size: 40,
-            color: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: AppIcons.logoMedium(),
           ),
         ),
         const SizedBox(height: 24),

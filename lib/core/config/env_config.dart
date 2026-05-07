@@ -7,10 +7,18 @@ import 'dart:io' show Platform;
 ///   - Android Emulator   → http://10.0.2.2:3000/api
 ///   - iOS Simulator      → http://localhost:3000/api
 ///   - Physical Device    → http://192.168.31.141:3000/api  (your PC's IP)
+///
+/// To change the IP address for physical devices:
+/// Option 1: Set environment variable DEV_MACHINE_IP before running
+///   Windows: $env:DEV_MACHINE_IP="192.168.1.100"; flutter run
+///   Linux/Mac: DEV_MACHINE_IP=192.168.1.100 flutter run
+/// Option 2: Update the _devMachineIp constant below
 class EnvConfig {
   /// Your development machine's local network IP address.
   /// Run 'ipconfig' on Windows → IPv4 Address
-  static const String _devMachineIp = '192.168.31.141';
+  /// Can be overridden with DEV_MACHINE_IP environment variable
+  static String get _devMachineIp =>
+      const String.fromEnvironment('DEV_MACHINE_IP', defaultValue: '192.168.31.141');
 
   /// Backend port
   static const int _port = 3000;
@@ -44,15 +52,16 @@ class EnvConfig {
 
     if (Platform.isAndroid) {
       // ─────────────────────────────────────────────────────────────
-      // Option A: USB + adb reverse  (set useAdbReverse = true)
-      //   Run once in terminal:  adb reverse tcp:3000 tcp:3000
+      // Option A: USB + adb reverse (set USE_ADB_REVERSE=true)
+      //   Run once in terminal: adb reverse tcp:3000 tcp:3000
       //   Phone treats localhost:3000 as the PC's backend — works even
       //   when the router has AP-Isolation enabled.
       //
-      // Option B: Same WiFi + LAN IP  (set useAdbReverse = false)
+      // Option B: Same WiFi + LAN IP (set USE_ADB_REVERSE=false)
       //   Requires router AP-Isolation to be OFF.
       // ─────────────────────────────────────────────────────────────
-      const bool useAdbReverse = true; // ← adb reverse tcp:3000 tcp:3000 is active
+      const bool useAdbReverse =
+          bool.fromEnvironment('USE_ADB_REVERSE', defaultValue: false);
 
       if (useAdbReverse) {
         return 'http://localhost:$_port/api'; // tunnelled via adb reverse
