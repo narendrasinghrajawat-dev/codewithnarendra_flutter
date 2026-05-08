@@ -7,6 +7,7 @@ import '../../features/about/presentation/pages/about_screen.dart';
 import '../../features/skills/presentation/pages/skill_screen.dart';
 import '../../features/education/presentation/pages/education_screen.dart';
 import '../../features/projects/presentation/pages/project_screen.dart';
+import '../../features/services/presentation/pages/service_screen.dart';
 import '../../features/auth/presentation/controllers/auth_controller.dart';
 
 /// Dashboard screen with common top bar and bottom navigation
@@ -43,6 +44,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       label: 'Projects',
       widget: ProjectScreen(),
     ),
+    _TabItem(
+      icon: Icons.design_services,
+      label: 'Services',
+      widget: ServiceScreen(),
+    ),
   ];
 
   @override
@@ -69,6 +75,29 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         foregroundColor: Colors.white,
         elevation: 2,
         actions: [
+          // Admin Panel Button - Only for admin users (role == '2')
+          Consumer(
+            builder: (context, ref, child) {
+              final authState = ref.watch(authControllerProvider);
+              
+              // Debug print
+              print('Dashboard: User role = ${authState.user?.role}');
+              print('Dashboard: isUserAdmin = ${authState.user?.isUserAdmin}');
+              print('Dashboard: User authenticated = ${authState.isAuthenticated}');
+              
+              // Show admin button for admin users (role == '2') or for testing (always true)
+              final isAdmin = authState.user?.isUserAdmin ?? false;
+              
+              if (isAdmin) {
+                return IconButton(
+                  icon: const Icon(Icons.admin_panel_settings, color: Colors.orange),
+                  tooltip: 'Admin Panel',
+                  onPressed: () => context.go('/admin'),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
           // Logout button
           IconButton(
             icon: const Icon(Icons.logout),

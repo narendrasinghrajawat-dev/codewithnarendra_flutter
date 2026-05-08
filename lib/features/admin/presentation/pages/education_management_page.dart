@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../core/constants/app_sizes.dart';
-import '../../../../../core/constants/app_colors.dart';
-import '../../../../../core/widgets/app_text.dart';
-import '../../../../../core/widgets/responsive_builder.dart';
-import '../widgets/admin_form_components.dart';
+import '../../../../core/services/localization_service.dart';
+import '../../../education/presentation/providers/education_provider.dart';
+import '../../../education/presentation/providers/education_state.dart';
+import '../widgets/admin_data_table.dart';
+import '../widgets/admin_dialogs.dart';
 
 class EducationManagementPage extends ConsumerStatefulWidget {
   const EducationManagementPage({super.key});
@@ -15,14 +15,23 @@ class EducationManagementPage extends ConsumerStatefulWidget {
 
 class _EducationManagementPageState extends ConsumerState<EducationManagementPage> {
   final _formKey = GlobalKey<FormState>();
-  final List<Map<String, dynamic>> _education = [];
   final _institutionController = TextEditingController();
   final _degreeController = TextEditingController();
   final _fieldController = TextEditingController();
   final _startDateController = TextEditingController();
   final _endDateController = TextEditingController();
   final _descriptionController = TextEditingController();
-  bool _isLoading = false;
+  
+  int _sortColumnIndex = 0;
+  bool _sortAscending = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(educationNotifierProvider.notifier).getEducation();
+    });
+  }
 
   @override
   void dispose() {
@@ -37,500 +46,342 @@ class _EducationManagementPageState extends ConsumerState<EducationManagementPag
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      body: ResponsiveBuilder(
-        mobile: _buildMobileLayout(),
-        tablet: _buildTabletLayout(),
-        desktop: _buildDesktopLayout(),
-      ),
-    );
-  }
+    final educationState = ref.watch(educationStateProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final localizations = ref.watch(localizationStateProvider);
+    final isHindi = localizations.language == AppLanguage.hi;
 
-  Widget _buildMobileLayout() {
-    return SafeArea(
+    final education = educationState.educationList?['data'] as List<dynamic>? ?? [];
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        await ref.read(educationNotifierProvider.notifier).getEducation();
+      },
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSizes.paddingMD),
-        child: Form(
-          key: _formKey,
-          child: ResponsiveColumn(
-            children: [
-              _buildHeader(),
-              const SizedBox(height: AppSizes.spacingLG),
-              _buildEducationList(),
-              const SizedBox(height: AppSizes.spacingLG),
-              _buildAddEducationButton(),
-            ],
-          ),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(context, isDark, isHindi, education.length),
+            const SizedBox(height: 20),
+            AdminDataTable(
+              columns: [
+                AdminDataColumn(
+                  key: 'institution',
+                  title: isHindi ? 'संस्थान' : 'Institution',
+                  sortable: true,
+                ),
+                AdminDataColumn(
+                  key: 'degree',
+                  title: isHindi ? 'डिग्री' : 'Degree',
+                  sortable: true,
+                ),
+                AdminDataColumn(
+                  key: 'field',
+                  title: isHindi ? 'क्षेत्र' : 'Field',
+                  sortable: true,
+                ),
+                AdminDataColumn(
+                  key: 'duration',
+                  title: isHindi ? 'अवधि' : 'Duration',
+                  sortable: false,
+                  cellBuilder: (row) => Text(
+                    '${row['startDate'] ?? ''} - ${row['endDate'] ?? (isHindi ? "वर्तमान" : "Present")}',
+                  ),
+                ),
+              ],
+              data: education.cast<Map<String, dynamic>>(),
+              isLoading: educationState.status == EducationStatus.loading,
+              emptyMessage: isHindi ? 'कोई शिक्षा नहीं मिली' : 'No education found',
+              sortColumnIndex: _sortColumnIndex,
+              sortAscending: _sortAscending,
+              onSort: (columnKey, ascending) {
+                setState(() {
+                  _sortColumnIndex = ['institution', 'degree', 'field', 'duration'].indexOf(columnKey);
+                  _sortAscending = ascending;
+                });
+              },
+              onEdit: (index, row) => _showEditDialog(context, row, isHindi),
+              onDelete: (index, row) => _showDeleteDialog(context, row, isHindi),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildTabletLayout() {
-    return SafeArea(
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSizes.paddingLG),
-              child: Form(
-                key: _formKey,
-                child: ResponsiveColumn(
-                  children: [
-                    _buildHeader(),
-                    const SizedBox(height: AppSizes.spacingXL),
-                    _buildEducationList(),
-                    const SizedBox(height: AppSizes.spacingXL),
-                    _buildAddEducationButton(),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDesktopLayout() {
-    return SafeArea(
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSizes.paddingXL),
-              child: Form(
-                key: _formKey,
-                child: ResponsiveColumn(
-                  children: [
-                    _buildHeader(),
-                    const SizedBox(height: AppSizes.spacingXL),
-                    _buildEducationList(),
-                    const SizedBox(height: AppSizes.spacingXL),
-                    _buildAddEducationButton(),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return ResponsiveContainer(
-      mobilePadding: const EdgeInsets.all(AppSizes.paddingMD),
-      desktopPadding: const EdgeInsets.all(AppSizes.paddingLG),
-      child: ResponsiveRow(
-        children: [
-          Expanded(
-            child: AppText.h3('Education Management'),
-          ),
-          ResponsiveRow(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: _loadEducationData,
-              ),
-              const SizedBox(width: AppSizes.spacingSM),
-              IconButton(
-                icon: const Icon(Icons.save),
-                onPressed: _saveEducationData,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEducationList() {
-    return ResponsiveColumn(
+  Widget _buildHeader(BuildContext context, bool isDark, bool isHindi, int count) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        ..._education.asMap().entries.map((entry) {
-          final index = entry.key;
-          final education = entry.value;
-          return _buildEducationCard(index, education);
-        }).toList(),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              isHindi ? 'शिक्षा प्रबंधन' : 'Education Management',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '$count ${isHindi ? "शिक्षा" : "education"} ${isHindi ? "पाई गई" : "found"}',
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+              ),
+            ),
+          ],
+        ),
+        FilledButton.icon(
+          onPressed: () => _showAddDialog(context, isHindi),
+          icon: const Icon(Icons.add, size: 20),
+          label: Text(isHindi ? 'शिक्षा जोड़ें' : 'Add Education'),
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildEducationCard(int index, Map<String, dynamic> education) {
-    return ResponsiveContainer(
-      mobilePadding: const EdgeInsets.only(bottom: AppSizes.spacingMD),
-      desktopPadding: const EdgeInsets.only(bottom: AppSizes.spacingMD),
-      mobileDecoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppSizes.radiusMD),
-        border: Border.all(color: AppColors.grey300),
-      ),
-      desktopDecoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppSizes.radiusLG),
-        border: Border.all(color: AppColors.grey300),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.grey300,
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSizes.paddingMD),
-        child: ResponsiveColumn(
-          children: [
-            ResponsiveRow(
-              children: [
-                Expanded(
-                  child: AppText.medium(
-                    education['degree'] ?? 'Unknown Degree',
-                  ),
-                ),
-                const SizedBox(width: AppSizes.spacingSM),
-                IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: () {
-                    _editEducation(index);
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSizes.spacingSM),
-            AppText.small(education['institution'] ?? 'Unknown Institution'),
-            const SizedBox(height: AppSizes.spacingSM),
-            AppText.small(education['field'] ?? 'Unknown Field'),
-            const SizedBox(height: AppSizes.spacingSM),
-            AppText.small(education['period'] ?? 'Unknown Period'),
-            const SizedBox(height: AppSizes.spacingSM),
-            IconButton(
-              icon: const Icon(Icons.delete, color: AppColors.error),
-              onPressed: () {
-                _deleteEducation(index);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAddEducationButton() {
-    return ResponsiveContainer(
-      mobilePadding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingSM),
-      desktopPadding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingMD),
-      child: SizedBox(
-        width: double.infinity,
-        height: AppSizes.buttonHeightLG,
-        child: ElevatedButton(
-          onPressed: _showAddEducationDialog,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.onPrimary,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppSizes.radiusMD),
-            ),
-          ),
-          child: AppText.button('Add Education'),
-        ),
-      ),
-    );
-  }
-
-  void _showAddEducationDialog() {
+  void _showAddDialog(BuildContext context, bool isHindi) {
+    _clearControllers();
+    
     showDialog(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Add Education'),
-          content: SizedBox(
-            width: 500,
-            child: ResponsiveColumn(
-              children: [
-                AdminFormComponents.buildTextField(
-                  label: 'Institution',
-                  controller: _institutionController,
-                  hintText: 'e.g. Stanford University',
-                ),
-                const SizedBox(height: AppSizes.spacingMD),
-                AdminFormComponents.buildTextField(
-                  label: 'Degree',
-                  controller: _degreeController,
-                  hintText: 'e.g. Bachelor of Science',
-                ),
-                const SizedBox(height: AppSizes.spacingMD),
-                AdminFormComponents.buildTextField(
-                  label: 'Field of Study',
-                  controller: _fieldController,
-                  hintText: 'e.g. Computer Science',
-                ),
-                const SizedBox(height: AppSizes.spacingMD),
-                ResponsiveRow(
-                  children: [
-                    Expanded(
-                      child: AdminFormComponents.buildDateField(
-                        context: dialogContext,
-                        label: 'Start Date',
-                        selectedDate: _parseDate(_startDateController.text),
-                        onChanged: (date) {
-                          _startDateController.text = _formatDate(date);
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: AppSizes.spacingMD),
-                    Expanded(
-                      child: AdminFormComponents.buildDateField(
-                        context: dialogContext,
-                        label: 'End Date',
-                        selectedDate: _parseDate(_endDateController.text),
-                        onChanged: (date) {
-                          _endDateController.text = _formatDate(date);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSizes.spacingMD),
-                AdminFormComponents.buildTextArea(
-                  label: 'Description',
-                  controller: _descriptionController,
-                  hintText: 'Describe your education...',
-                  maxLines: 3,
-                ),
-              ],
+      builder: (context) => AdminFormDialog(
+        title: isHindi ? 'शिक्षा जोड़ें' : 'Add Education',
+        formKey: _formKey,
+        formFields: [
+          AdminFormField(
+            label: isHindi ? 'संस्थान' : 'Institution',
+            isRequired: true,
+            child: AdminTextField(
+              controller: _institutionController,
+              hintText: isHindi ? 'उदाहरण: हार्वर्ड विश्वविद्यालय' : 'e.g., Harvard University',
+              validator: (value) => value?.isEmpty ?? true ? (isHindi ? 'संस्थान आवश्यक है' : 'Institution is required') : null,
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
-              child: const Text('Cancel'),
+          AdminFormField(
+            label: isHindi ? 'डिग्री' : 'Degree',
+            isRequired: true,
+            child: AdminTextField(
+              controller: _degreeController,
+              hintText: isHindi ? 'उदाहरण: बैचलर ऑफ साइंस' : 'e.g., Bachelor of Science',
+              validator: (value) => value?.isEmpty ?? true ? (isHindi ? 'डिग्री आवश्यक है' : 'Degree is required') : null,
             ),
-            ElevatedButton(
-              onPressed: () {
-                _addNewEducation();
-                Navigator.of(dialogContext).pop();
-              },
-              child: const Text('Add'),
+          ),
+          AdminFormField(
+            label: isHindi ? 'क्षेत्र' : 'Field',
+            isRequired: true,
+            child: AdminTextField(
+              controller: _fieldController,
+              hintText: isHindi ? 'उदाहरण: कंप्यूटर साइंस' : 'e.g., Computer Science',
+              validator: (value) => value?.isEmpty ?? true ? (isHindi ? 'क्षेत्र आवश्यक है' : 'Field is required') : null,
             ),
-          ],
-        );
-      },
+          ),
+          AdminFormField(
+            label: isHindi ? 'प्रारंभ तिथि' : 'Start Date',
+            child: AdminTextField(
+              controller: _startDateController,
+              hintText: 'YYYY-MM-DD',
+            ),
+          ),
+          AdminFormField(
+            label: isHindi ? 'समाप्ति तिथि' : 'End Date',
+            child: AdminTextField(
+              controller: _endDateController,
+              hintText: 'YYYY-MM-DD',
+            ),
+          ),
+          AdminFormField(
+            label: isHindi ? 'विवरण' : 'Description',
+            child: AdminTextField(
+              controller: _descriptionController,
+              hintText: isHindi ? 'अतिरिक्त विवरण...' : 'Additional details...',
+              maxLines: 3,
+            ),
+          ),
+        ],
+        onSave: () => _createEducation(isHindi),
+      ),
     );
   }
 
-  void _addNewEducation() {
-    if (_institutionController.text.isNotEmpty) {
-      setState(() {
-        _education.add({
-          'institution': _institutionController.text,
-          'degree': _degreeController.text,
-          'field': _fieldController.text,
-          'startDate': _startDateController.text,
-          'endDate': _endDateController.text,
-          'description': _descriptionController.text,
-          'period': _buildPeriod(_startDateController.text, _endDateController.text),
-        });
-      });
-
-      _institutionController.clear();
-      _degreeController.clear();
-      _fieldController.clear();
-      _startDateController.clear();
-      _endDateController.clear();
-      _descriptionController.clear();
-    }
-  }
-
-  void _editEducation(int index) {
-    final education = _education[index];
+  void _showEditDialog(BuildContext context, Map<String, dynamic> education, bool isHindi) {
     _institutionController.text = education['institution'] ?? '';
     _degreeController.text = education['degree'] ?? '';
     _fieldController.text = education['field'] ?? '';
     _startDateController.text = education['startDate'] ?? '';
     _endDateController.text = education['endDate'] ?? '';
     _descriptionController.text = education['description'] ?? '';
-    
-    _showEditEducationDialog(index);
-  }
 
-  void _showEditEducationDialog(int index) {
     showDialog(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Edit Education'),
-          content: SizedBox(
-            width: 500,
-            child: ResponsiveColumn(
-              children: [
-                AdminFormComponents.buildTextField(
-                  label: 'Institution',
-                  controller: _institutionController,
-                  hintText: 'e.g. Stanford University',
-                ),
-                const SizedBox(height: AppSizes.spacingMD),
-                AdminFormComponents.buildTextField(
-                  label: 'Degree',
-                  controller: _degreeController,
-                  hintText: 'e.g. Bachelor of Science',
-                ),
-                const SizedBox(height: AppSizes.spacingMD),
-                AdminFormComponents.buildTextField(
-                  label: 'Field of Study',
-                  controller: _fieldController,
-                  hintText: 'e.g. Computer Science',
-                ),
-                const SizedBox(height: AppSizes.spacingMD),
-                ResponsiveRow(
-                  children: [
-                    Expanded(
-                      child: AdminFormComponents.buildDateField(
-                        context: dialogContext,
-                        label: 'Start Date',
-                        selectedDate: _parseDate(_startDateController.text),
-                        onChanged: (date) {
-                          _startDateController.text = _formatDate(date);
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: AppSizes.spacingMD),
-                    Expanded(
-                      child: AdminFormComponents.buildDateField(
-                        context: dialogContext,
-                        label: 'End Date',
-                        selectedDate: _parseDate(_endDateController.text),
-                        onChanged: (date) {
-                          _endDateController.text = _formatDate(date);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSizes.spacingMD),
-                AdminFormComponents.buildTextArea(
-                  label: 'Description',
-                  controller: _descriptionController,
-                  hintText: 'Describe your education...',
-                  maxLines: 3,
-                ),
-              ],
+      builder: (context) => AdminFormDialog(
+        title: isHindi ? 'शिक्षा संपादित करें' : 'Edit Education',
+        isEditing: true,
+        formKey: _formKey,
+        formFields: [
+          AdminFormField(
+            label: isHindi ? 'संस्थान' : 'Institution',
+            isRequired: true,
+            child: AdminTextField(
+              controller: _institutionController,
+              validator: (value) => value?.isEmpty ?? true ? (isHindi ? 'संस्थान आवश्यक है' : 'Institution is required') : null,
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
-              child: const Text('Cancel'),
+          AdminFormField(
+            label: isHindi ? 'डिग्री' : 'Degree',
+            isRequired: true,
+            child: AdminTextField(
+              controller: _degreeController,
+              validator: (value) => value?.isEmpty ?? true ? (isHindi ? 'डिग्री आवश्यक है' : 'Degree is required') : null,
             ),
-            ElevatedButton(
-              onPressed: () {
-                _updateEducationFromDialog(index);
-                Navigator.of(dialogContext).pop();
-              },
-              child: const Text('Update'),
+          ),
+          AdminFormField(
+            label: isHindi ? 'क्षेत्र' : 'Field',
+            isRequired: true,
+            child: AdminTextField(
+              controller: _fieldController,
+              validator: (value) => value?.isEmpty ?? true ? (isHindi ? 'क्षेत्र आवश्यक है' : 'Field is required') : null,
             ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _updateEducationFromDialog(int index) {
-    if (_institutionController.text.isNotEmpty) {
-      setState(() {
-        _education[index] = {
-          'institution': _institutionController.text,
-          'degree': _degreeController.text,
-          'field': _fieldController.text,
-          'startDate': _startDateController.text,
-          'endDate': _endDateController.text,
-          'description': _descriptionController.text,
-          'period': _buildPeriod(_startDateController.text, _endDateController.text),
-        };
-      });
-
-      _institutionController.clear();
-      _degreeController.clear();
-      _fieldController.clear();
-      _startDateController.clear();
-      _endDateController.clear();
-      _descriptionController.clear();
-    }
-  }
-
-  void _deleteEducation(int index) {
-    setState(() {
-      _education.removeAt(index);
-    });
-  }
-
-  String _buildPeriod(String startDate, String endDate) {
-    if (startDate.isNotEmpty && endDate.isNotEmpty) {
-      return '$startDate - $endDate';
-    } else if (startDate.isNotEmpty) {
-      return '$startDate - Present';
-    } else if (endDate.isNotEmpty) {
-      return 'Until $endDate';
-    } else {
-      return 'No dates specified';
-    }
-  }
-
-  DateTime? _parseDate(String dateString) {
-    if (dateString.isEmpty) return null;
-    try {
-      return DateTime.parse(dateString);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  String _formatDate(DateTime? date) {
-    if (date == null) return '';
-    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
-  }
-
-  void _loadEducationData() {
-    // TODO: Load education data from API/storage
-    setState(() {
-      _education.addAll([
-        {
-          'institution': 'Stanford University',
-          'degree': 'Bachelor of Science',
-          'field': 'Computer Science',
-          'startDate': '01/09/2018',
-          'endDate': '01/06/2022',
-          'description': 'Studied computer science with focus on mobile development',
-          'period': '01/09/2018 - 01/06/2022',
-        },
-        {
-          'institution': 'MIT',
-          'degree': 'Master of Engineering',
-          'field': 'Computer Engineering',
-          'startDate': '01/09/2022',
-          'endDate': '01/12/2023',
-          'description': 'Advanced studies in distributed systems and machine learning',
-          'period': '01/09/2022 - 01/12/2023',
-        },
-      ]);
-    });
-  }
-
-  Future<void> _saveEducationData() async {
-    // TODO: Save education data to API/storage
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Education data saved successfully!'),
-        backgroundColor: AppColors.success,
+          ),
+          AdminFormField(
+            label: isHindi ? 'प्रारंभ तिथि' : 'Start Date',
+            child: AdminTextField(
+              controller: _startDateController,
+            ),
+          ),
+          AdminFormField(
+            label: isHindi ? 'समाप्ति तिथि' : 'End Date',
+            child: AdminTextField(
+              controller: _endDateController,
+            ),
+          ),
+          AdminFormField(
+            label: isHindi ? 'विवरण' : 'Description',
+            child: AdminTextField(
+              controller: _descriptionController,
+              maxLines: 3,
+            ),
+          ),
+        ],
+        onSave: () => _updateEducation(education['_id'], isHindi),
       ),
     );
+  }
+
+  void _showDeleteDialog(BuildContext context, Map<String, dynamic> education, bool isHindi) {
+    showDialog(
+      context: context,
+      builder: (context) => AdminDeleteDialog(
+        title: isHindi ? 'शिक्षा हटाएं' : 'Delete Education',
+        message: isHindi ? 'क्या आप वाकई इस शिक्षा को हटाना चाहते हैं' : 'Are you sure you want to delete',
+        itemName: education['institution'] ?? '',
+        onConfirm: () => _deleteEducation(education['_id'], isHindi),
+      ),
+    );
+  }
+
+  void _clearControllers() {
+    _institutionController.clear();
+    _degreeController.clear();
+    _fieldController.clear();
+    _startDateController.clear();
+    _endDateController.clear();
+    _descriptionController.clear();
+  }
+
+  Future<void> _createEducation(bool isHindi) async {
+    final data = {
+      'institution': _institutionController.text,
+      'degree': _degreeController.text,
+      'field': _fieldController.text,
+      'startDate': _startDateController.text,
+      'endDate': _endDateController.text,
+      'description': _descriptionController.text,
+    };
+
+    await ref.read(educationNotifierProvider.notifier).createEducation(data);
+    
+    if (mounted) {
+      final educationState = ref.read(educationStateProvider);
+      if (educationState.status == EducationStatus.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${getLocalizedString('educationAddFailed', isHindi ? AppLanguage.hi : AppLanguage.en)}: ${educationState.errorMessage}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      } else {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(getLocalizedString('educationAdded', isHindi ? AppLanguage.hi : AppLanguage.en)),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateEducation(String id, bool isHindi) async {
+    final data = {
+      'institution': _institutionController.text,
+      'degree': _degreeController.text,
+      'field': _fieldController.text,
+      'startDate': _startDateController.text,
+      'endDate': _endDateController.text,
+      'description': _descriptionController.text,
+    };
+
+    await ref.read(educationNotifierProvider.notifier).updateEducation(id, data);
+    
+    if (mounted) {
+      final educationState = ref.read(educationStateProvider);
+      if (educationState.status == EducationStatus.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${getLocalizedString('educationUpdateFailed', isHindi ? AppLanguage.hi : AppLanguage.en)}: ${educationState.errorMessage}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      } else {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(getLocalizedString('educationUpdated', isHindi ? AppLanguage.hi : AppLanguage.en)),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteEducation(String id, bool isHindi) async {
+    await ref.read(educationNotifierProvider.notifier).deleteEducation(id);
+    
+    if (mounted) {
+      final educationState = ref.read(educationStateProvider);
+      if (educationState.status == EducationStatus.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${getLocalizedString('educationDeleteFailed', isHindi ? AppLanguage.hi : AppLanguage.en)}: ${educationState.errorMessage}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(getLocalizedString('educationDeleted', isHindi ? AppLanguage.hi : AppLanguage.en)),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

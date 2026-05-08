@@ -94,7 +94,7 @@ abstract final class AppStrings {
   static const String statusPending = 'Pending';
   static const String statusFailed = 'Failed';
   static const String statusCancelled = 'Cancelled';
-  static const String statusEmpty = 'No data found';
+  static const String statusEmpty = 'Data Not Found';
   static const String statusNoResults = 'No results found';
   static const String statusNoInternet = 'No internet connection';
   static const String statusOffline = 'Offline';

@@ -4,6 +4,7 @@ import '../../data/repositories/about_repository_impl.dart';
 import '../../data/services/about_api_service.dart';
 import '../../domain/repositories/about_repository.dart';
 import '../../domain/usecases/get_about_usecase.dart';
+import '../../domain/usecases/create_about_usecase.dart';
 import '../../domain/usecases/update_about_usecase.dart';
 import 'about_notifier.dart';
 import 'about_state.dart';
@@ -33,6 +34,11 @@ final getAboutUseCaseProvider = Provider<GetAboutUseCase>((ref) {
   return GetAboutUseCase(repository);
 });
 
+final createAboutUseCaseProvider = Provider<CreateAboutUseCase>((ref) {
+  final repository = ref.watch(aboutRepositoryProvider);
+  return CreateAboutUseCase(repository);
+});
+
 final updateAboutUseCaseProvider = Provider<UpdateAboutUseCase>((ref) {
   final repository = ref.watch(aboutRepositoryProvider);
   return UpdateAboutUseCase(repository);
@@ -42,6 +48,7 @@ final updateAboutUseCaseProvider = Provider<UpdateAboutUseCase>((ref) {
 final aboutNotifierProvider = StateNotifierProvider<AboutNotifier, AboutState>((ref) {
   return AboutNotifier(
     getAboutUseCase: ref.watch(getAboutUseCaseProvider),
+    createAboutUseCase: ref.watch(createAboutUseCaseProvider),
     updateAboutUseCase: ref.watch(updateAboutUseCaseProvider),
   );
 });

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../core/constants/app_sizes.dart';
-import '../../../../../core/constants/app_colors.dart';
-import '../../../../../core/widgets/app_text.dart';
-import '../../../../../core/widgets/responsive_builder.dart';
-import '../widgets/admin_form_components.dart';
+import '../../../../core/services/localization_service.dart';
+import '../../../about/presentation/providers/about_provider.dart';
+import '../../../about/presentation/providers/about_state.dart';
+import '../widgets/admin_dialogs.dart';
 
 class AboutManagementPage extends ConsumerStatefulWidget {
   const AboutManagementPage({super.key});
@@ -28,6 +27,12 @@ class _AboutManagementPageState extends ConsumerState<AboutManagementPage> {
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    _loadAboutData();
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     _titleController.dispose();
@@ -44,330 +49,56 @@ class _AboutManagementPageState extends ConsumerState<AboutManagementPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      body: ResponsiveBuilder(
-        mobile: _buildMobileLayout(),
-        tablet: _buildTabletLayout(),
-        desktop: _buildDesktopLayout(),
-      ),
-    );
-  }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final localizations = ref.watch(localizationStateProvider);
+    final isHindi = localizations.language == AppLanguage.hi;
 
-  Widget _buildMobileLayout() {
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSizes.paddingMD),
-        child: Form(
-          key: _formKey,
-          child: ResponsiveColumn(
-            children: [
-              _buildHeader(),
-              const SizedBox(height: AppSizes.spacingLG),
-              _buildAboutForm(),
-              const SizedBox(height: AppSizes.spacingLG),
-              _buildActionButtons(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTabletLayout() {
-    return SafeArea(
-      child: Row(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            flex: 2,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSizes.paddingLG),
-              child: Form(
-                key: _formKey,
-                child: ResponsiveColumn(
-                  children: [
-                    _buildHeader(),
-                    const SizedBox(height: AppSizes.spacingLG),
-                    _buildAboutForm(),
-                    const SizedBox(height: AppSizes.spacingLG),
-                    _buildActionButtons(),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 1,
-            child: _buildPreviewSection(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDesktopLayout() {
-    return SafeArea(
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSizes.paddingXL),
-              child: Form(
-                key: _formKey,
-                child: ResponsiveColumn(
-                  children: [
-                    _buildHeader(),
-                    const SizedBox(height: AppSizes.spacingXL),
-                    _buildAboutForm(),
-                    const SizedBox(height: AppSizes.spacingXL),
-                    _buildActionButtons(),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 1,
-            child: _buildPreviewSection(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return ResponsiveContainer(
-      mobilePadding: const EdgeInsets.all(AppSizes.paddingMD),
-      desktopPadding: const EdgeInsets.all(AppSizes.paddingLG),
-      child: ResponsiveRow(
-        children: [
-          Expanded(
-            child: AppText.h3('About Management'),
-          ),
-          ResponsiveRow(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: _loadAboutData,
-              ),
-              const SizedBox(width: AppSizes.spacingSM),
-              IconButton(
-                icon: const Icon(Icons.save),
-                onPressed: _saveAboutData,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAboutForm() {
-    return ResponsiveColumn(
-      spacing: AppSizes.spacingMD,
-      children: [
-        ResponsiveRow(
-          children: [
-            Expanded(
-              flex: 2,
-              child: AdminFormComponents.buildTextField(
-                label: 'Full Name',
-                controller: _nameController,
-                hintText: 'Enter your full name',
-                prefixIcon: Icons.person,
-              ),
-            ),
-            const SizedBox(width: AppSizes.spacingMD),
-            Expanded(
-              flex: 1,
-              child: AdminFormComponents.buildTextField(
-                label: 'Professional Title',
-                controller: _titleController,
-                hintText: 'e.g. Senior Developer',
-                prefixIcon: Icons.work,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSizes.spacingMD),
-        AdminFormComponents.buildTextArea(
-          label: 'Bio',
-          controller: _bioController,
-          hintText: 'Tell us about yourself...',
-          maxLines: 4,
-        ),
-        const SizedBox(height: AppSizes.spacingMD),
-        ResponsiveRow(
-          children: [
-            Expanded(
-              child: AdminFormComponents.buildTextField(
-                label: 'Email',
-                controller: _emailController,
-                hintText: 'contact@example.com',
-                prefixIcon: Icons.email,
-                keyboardType: TextInputType.emailAddress,
-              ),
-            ),
-            const SizedBox(width: AppSizes.spacingMD),
-            Expanded(
-              child: AdminFormComponents.buildTextField(
-                label: 'Phone',
-                controller: _phoneController,
-                hintText: '+1 (555) 123-4567',
-                prefixIcon: Icons.phone,
-                keyboardType: TextInputType.phone,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSizes.spacingMD),
-        AdminFormComponents.buildTextField(
-          label: 'Location',
-          controller: _locationController,
-          hintText: 'City, Country',
-          prefixIcon: Icons.location_on,
-        ),
-        const SizedBox(height: AppSizes.spacingMD),
-        ResponsiveRow(
-          children: [
-            Expanded(
-              child: AdminFormComponents.buildTextField(
-                label: 'Website',
-                controller: _websiteController,
-                hintText: 'https://yourwebsite.com',
-                prefixIcon: Icons.language,
-                keyboardType: TextInputType.url,
-              ),
-            ),
-            const SizedBox(width: AppSizes.spacingMD),
-            Expanded(
-              child: AdminFormComponents.buildTextField(
-                label: 'LinkedIn',
-                controller: _linkedinController,
-                hintText: 'linkedin.com/in/yourprofile',
-                prefixIcon: Icons.link,
-                keyboardType: TextInputType.url,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSizes.spacingMD),
-        ResponsiveRow(
-          children: [
-            Expanded(
-              child: AdminFormComponents.buildTextField(
-                label: 'GitHub',
-                controller: _githubController,
-                hintText: 'github.com/yourusername',
-                prefixIcon: Icons.code,
-                keyboardType: TextInputType.url,
-              ),
-            ),
-            const SizedBox(width: AppSizes.spacingMD),
-            Expanded(
-              child: AdminFormComponents.buildImagePicker(
-                label: 'Resume',
-                imageUrl: _resumeController.text,
-                onPickImage: () {
-                  // TODO: Implement resume picker
-                },
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionButtons() {
-    return ResponsiveRow(
-      children: [
-        Expanded(
-          child: OutlinedButton(
-            onPressed: _clearForm,
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSizes.paddingLG,
-                vertical: AppSizes.paddingMD,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSizes.radiusMD),
-              ),
-            ),
-            child: AppText.medium('Clear'),
-          ),
-        ),
-        const SizedBox(width: AppSizes.spacingMD),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : _saveAboutData,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: AppColors.white,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSizes.paddingLG,
-                vertical: AppSizes.paddingMD,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSizes.radiusMD),
-              ),
-            ),
-            child: _isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : AppText.medium('Save About'),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPreviewSection() {
-    return ResponsiveContainer(
-      mobilePadding: const EdgeInsets.all(AppSizes.paddingMD),
-      desktopPadding: const EdgeInsets.all(AppSizes.paddingLG),
-      child: ResponsiveColumn(
-        children: [
-          AppText.h3('Preview'),
-          const SizedBox(height: AppSizes.spacingMD),
-          ResponsiveContainer(
-            mobileDecoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppSizes.radiusMD),
-              border: Border.all(color: AppColors.grey300),
-            ),
-            desktopDecoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppSizes.radiusLG),
-              border: Border.all(color: AppColors.grey300),
-            ),
+          _buildHeader(context, isDark, isHindi),
+          const SizedBox(height: 20),
+          Card(
+            elevation: 2,
             child: Padding(
-              padding: const EdgeInsets.all(AppSizes.paddingLG),
-              child: ResponsiveColumn(
-                children: [
-                  if (_nameController.text.isNotEmpty)
-                    _buildPreviewItem('Name', _nameController.text),
-                  if (_titleController.text.isNotEmpty)
-                    _buildPreviewItem('Title', _titleController.text),
-                  if (_bioController.text.isNotEmpty)
-                    _buildPreviewItem('Bio', _bioController.text),
-                  if (_emailController.text.isNotEmpty)
-                    _buildPreviewItem('Email', _emailController.text),
-                  if (_phoneController.text.isNotEmpty)
-                    _buildPreviewItem('Phone', _phoneController.text),
-                  if (_locationController.text.isNotEmpty)
-                    _buildPreviewItem('Location', _locationController.text),
-                  if (_websiteController.text.isNotEmpty)
-                    _buildPreviewItem('Website', _websiteController.text),
-                  if (_linkedinController.text.isNotEmpty)
-                    _buildPreviewItem('LinkedIn', _linkedinController.text),
-                  if (_githubController.text.isNotEmpty)
-                    _buildPreviewItem('GitHub', _githubController.text),
-                ],
+              padding: const EdgeInsets.all(24),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isHindi ? 'व्यक्तिगत जानकारी' : 'Personal Information',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    _buildFormFields(isHindi),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: _isLoading ? null : () => _saveAboutData(isHindi),
+                        icon: _isLoading 
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Icon(Icons.save),
+                        label: Text(isHindi ? 'जानकारी सहेजें' : 'Save Information'),
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -376,67 +107,213 @@ class _AboutManagementPageState extends ConsumerState<AboutManagementPage> {
     );
   }
 
-  Widget _buildPreviewItem(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSizes.spacingSM),
-      child: ResponsiveContainer(
-        child: ResponsiveColumn(
-          children: [
-            AppText.label(label),
-            const SizedBox(height: AppSizes.spacingXS),
-            AppText.medium(value),
-          ],
+  Widget _buildHeader(BuildContext context, bool isDark, bool isHindi) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          isHindi ? 'बारे में प्रबंधन' : 'About Management',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : Colors.black87,
+          ),
         ),
-      ),
+        const SizedBox(height: 4),
+        Text(
+          isHindi ? 'अपनी व्यक्तिगत जानकारी प्रबंधित करें' : 'Manage your personal information',
+          style: TextStyle(
+            fontSize: 14,
+            color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+          ),
+        ),
+      ],
     );
   }
 
-  void _clearForm() {
-    _nameController.clear();
-    _titleController.clear();
-    _bioController.clear();
-    _emailController.clear();
-    _phoneController.clear();
-    _locationController.clear();
-    _websiteController.clear();
-    _linkedinController.clear();
-    _githubController.clear();
-    _resumeController.clear();
-  }
-
-  void _loadAboutData() {
-    // TODO: Load existing about data from API/storage
-    _nameController.text = 'John Doe';
-    _titleController.text = 'Senior Flutter Developer';
-    _bioController.text = 'Experienced Flutter developer with a passion for creating beautiful and functional mobile applications.';
-    _emailController.text = 'john.doe@example.com';
-    _phoneController.text = '+1 (555) 123-4567';
-    _locationController.text = 'San Francisco, CA';
-    _websiteController.text = 'https://johndoe.dev';
-    _linkedinController.text = 'https://linkedin.com/in/johndoe';
-    _githubController.text = 'https://github.com/johndoe';
-  }
-
-  Future<void> _saveAboutData() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      setState(() {
-        _isLoading = true;
-      });
-
-      // TODO: Save about data to API/storage
-      await Future.delayed(const Duration(seconds: 2));
-
-      setState(() {
-        _isLoading = false;
-      });
-
-      // TODO: Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('About information saved successfully!'),
-          backgroundColor: AppColors.success,
+  Widget _buildFormFields(bool isHindi) {
+    return Column(
+      children: [
+        AdminFormField(
+          label: isHindi ? 'नाम' : 'Name',
+          isRequired: true,
+          child: AdminTextField(
+            controller: _nameController,
+            hintText: isHindi ? 'आपका पूरा नाम' : 'Your full name',
+            validator: (value) => value?.isEmpty ?? true 
+              ? (isHindi ? 'नाम आवश्यक है' : 'Name is required') 
+              : null,
+          ),
         ),
-      );
+        AdminFormField(
+          label: isHindi ? 'पद' : 'Title',
+          isRequired: true,
+          child: AdminTextField(
+            controller: _titleController,
+            hintText: isHindi ? 'उदाहरण: सीनियर फ्लटर डेवलपर' : 'e.g., Senior Flutter Developer',
+            validator: (value) => value?.isEmpty ?? true 
+              ? (isHindi ? 'पद आवश्यक है' : 'Title is required') 
+              : null,
+          ),
+        ),
+        AdminFormField(
+          label: isHindi ? 'बायो' : 'Bio',
+          child: AdminTextField(
+            controller: _bioController,
+            hintText: isHindi ? 'अपने बारे में कुछ बताएं...' : 'Tell us about yourself...',
+            maxLines: 5,
+          ),
+        ),
+        AdminFormField(
+          label: isHindi ? 'ईमेल' : 'Email',
+          isRequired: true,
+          child: AdminTextField(
+            controller: _emailController,
+            hintText: 'john@example.com',
+            keyboardType: TextInputType.emailAddress,
+            validator: (value) => value?.isEmpty ?? true 
+              ? (isHindi ? 'ईमेल आवश्यक है' : 'Email is required') 
+              : null,
+          ),
+        ),
+        AdminFormField(
+          label: isHindi ? 'फोन' : 'Phone',
+          child: AdminTextField(
+            controller: _phoneController,
+            hintText: '+1 (555) 123-4567',
+            keyboardType: TextInputType.phone,
+          ),
+        ),
+        AdminFormField(
+          label: isHindi ? 'स्थान' : 'Location',
+          child: AdminTextField(
+            controller: _locationController,
+            hintText: isHindi ? 'उदाहरण: मुंबई, भारत' : 'e.g., Mumbai, India',
+          ),
+        ),
+        AdminFormField(
+          label: isHindi ? 'वेबसाइट' : 'Website',
+          child: AdminTextField(
+            controller: _websiteController,
+            hintText: 'https://yourwebsite.com',
+            keyboardType: TextInputType.url,
+          ),
+        ),
+        AdminFormField(
+          label: 'LinkedIn',
+          child: AdminTextField(
+            controller: _linkedinController,
+            hintText: 'https://linkedin.com/in/username',
+            keyboardType: TextInputType.url,
+          ),
+        ),
+        AdminFormField(
+          label: 'GitHub',
+          child: AdminTextField(
+            controller: _githubController,
+            hintText: 'https://github.com/username',
+            keyboardType: TextInputType.url,
+          ),
+        ),
+        AdminFormField(
+          label: isHindi ? 'रिज्यूमे URL' : 'Resume URL',
+          child: AdminTextField(
+            controller: _resumeController,
+            hintText: 'https://...',
+            keyboardType: TextInputType.url,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _loadAboutData() async {
+    await ref.read(aboutNotifierProvider.notifier).getAbout();
+    
+    final aboutState = ref.read(aboutStateProvider);
+    if (aboutState.about != null) {
+      final about = aboutState.about!;
+      final data = about['data'];
+      if (data != null && data is List && data.isNotEmpty) {
+        final aboutItem = data[0];
+        _nameController.text = aboutItem['title'] ?? '';
+        _titleController.text = aboutItem['title'] ?? '';
+        _bioController.text = aboutItem['description'] ?? '';
+        _emailController.text = aboutItem['email'] ?? '';
+        _phoneController.text = aboutItem['phone'] ?? '';
+        _locationController.text = aboutItem['location'] ?? '';
+        _websiteController.text = aboutItem['website'] ?? '';
+        _linkedinController.text = aboutItem['linkedin'] ?? '';
+        _githubController.text = aboutItem['github'] ?? '';
+        _resumeController.text = aboutItem['resumeUrl'] ?? '';
+      }
+    }
+  }
+
+  Future<void> _saveAboutData(bool isHindi) async {
+    if (_formKey.currentState?.validate() ?? false) {
+      setState(() => _isLoading = true);
+      
+      try {
+        final data = {
+          'title': _titleController.text,
+          'description': _bioController.text,
+          'email': _emailController.text,
+          'phone': _phoneController.text,
+          'location': _locationController.text,
+          'website': _websiteController.text,
+          'linkedin': _linkedinController.text,
+          'github': _githubController.text,
+          'resumeUrl': _resumeController.text,
+        };
+        
+        final aboutState = ref.read(aboutStateProvider);
+        final about = aboutState.about;
+        String? aboutId;
+        if (about != null) {
+          final aboutData = about['data'];
+          if (aboutData != null && aboutData is List && aboutData.isNotEmpty) {
+            aboutId = aboutData[0]['_id'];
+          }
+        }
+        
+        if (aboutId != null) {
+          await ref.read(aboutNotifierProvider.notifier).updateAbout(aboutId, data);
+        } else {
+          await ref.read(aboutNotifierProvider.notifier).createAbout(data);
+        }
+        
+        setState(() => _isLoading = false);
+        
+        if (mounted) {
+          final updatedState = ref.read(aboutStateProvider);
+          if (updatedState.status == AboutStatus.error) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('${getLocalizedString('aboutSaveFailed', isHindi ? AppLanguage.hi : AppLanguage.en)}: ${updatedState.errorMessage}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(getLocalizedString('aboutSaved', isHindi ? AppLanguage.hi : AppLanguage.en)),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        setState(() => _isLoading = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${getLocalizedString('aboutSaveFailed', isHindi ? AppLanguage.hi : AppLanguage.en)}: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     }
   }
 }

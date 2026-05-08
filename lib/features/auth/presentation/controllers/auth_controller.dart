@@ -1,10 +1,13 @@
 import 'dart:convert';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/services/auth_api_service.dart';
 import '../../data/models/user_model.dart';
 import '../../../../core/services/network_service.dart';
+import '../../../../main.dart';
 
 /// Auth states
 enum AuthStatus {
@@ -61,6 +64,31 @@ class AuthController extends StateNotifier<AuthState> {
       : super(AuthState()) {
     _loadStoredToken();
     _checkAuthStatus();
+    _setupUnauthorizedHandler();
+  }
+
+  /// Setup handler for 401 Unauthorized errors
+  void _setupUnauthorizedHandler() {
+    _networkService.setOnUnauthorizedCallback(() {
+      // Only handle if currently authenticated (prevent multiple redirects)
+      if (state.status == AuthStatus.unauthenticated) {
+        print('Already unauthenticated, skipping redirect');
+        return;
+      }
+      
+      print('401 Unauthorized received - redirecting to login');
+      
+      // Clear auth state and redirect to login
+      logout();
+      
+      // Navigate to login screen using global navigator key
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (navigatorKey.currentContext != null) {
+          // Use pushReplacement to avoid stacking login screens
+          navigatorKey.currentContext!.go('/login');
+        }
+      });
+    });
   }
 
   /// Load stored token from SharedPreferences
@@ -266,6 +294,13 @@ class AuthController extends StateNotifier<AuthState> {
       // Clear stored tokens
       await _clearStoredTokens();
       state = AuthState(status: AuthStatus.unauthenticated);
+      
+      // Navigate to login screen
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (navigatorKey.currentContext != null) {
+          navigatorKey.currentContext!.go('/login');
+        }
+      });
     }
   }
 

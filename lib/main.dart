@@ -14,6 +14,7 @@ import 'features/auth/presentation/pages/login_screen.dart';
 import 'features/auth/presentation/pages/register_screen.dart';
 import 'features/admin/presentation/pages/admin_login_screen.dart';
 import 'features/admin/presentation/pages/admin_dashboard_screen.dart';
+import 'features/admin/presentation/pages/admin_page.dart';
 import 'features/projects/presentation/pages/project_screen.dart';
 import 'features/skills/presentation/pages/skill_screen.dart';
 import 'features/education/presentation/pages/education_screen.dart';
@@ -85,6 +86,10 @@ class MyApp extends ConsumerWidget {
           GoRoute(
             path: '/admin/dashboard',
             builder: (context, state) => const AdminDashboardScreen(),
+          ),
+          GoRoute(
+            path: '/admin',
+            builder: (context, state) => const AdminPage(),
           ),
           
           // Main App Routes

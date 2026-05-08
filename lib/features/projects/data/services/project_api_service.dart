@@ -11,11 +11,16 @@ class ProjectApiService {
   /// Get all projects
   Future<Map<String, dynamic>> getAllProjects() async {
     try {
-      final response = await _networkService.get<Map<String, dynamic>>(
+      final response = await _networkService.get(
         ApiEndpoints.getProjects,
       );
-      return response as Map<String, dynamic>;
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return data;
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
+      print('ProjectApiService.getAllProjects error: $e');
       throw Exception('Failed to get projects: ${e.toString()}');
     }
   }
@@ -23,11 +28,16 @@ class ProjectApiService {
   /// Get featured projects
   Future<Map<String, dynamic>> getFeaturedProjects() async {
     try {
-      final response = await _networkService.get<Map<String, dynamic>>(
+      final response = await _networkService.get(
         ApiEndpoints.getFeaturedProjects,
       );
-      return response as Map<String, dynamic>;
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return data;
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
+      print('ProjectApiService.getFeaturedProjects error: $e');
       throw Exception('Failed to get featured projects: ${e.toString()}');
     }
   }
@@ -35,12 +45,17 @@ class ProjectApiService {
   /// Search projects
   Future<Map<String, dynamic>> searchProjects(String query) async {
     try {
-      final response = await _networkService.get<Map<String, dynamic>>(
+      final response = await _networkService.get(
         ApiEndpoints.searchProjects,
         queryParameters: {'q': query},
       );
-      return response as Map<String, dynamic>;
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return data;
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
+      print('ProjectApiService.searchProjects error: $e');
       throw Exception('Failed to search projects: ${e.toString()}');
     }
   }
@@ -48,11 +63,16 @@ class ProjectApiService {
   /// Get project by ID
   Future<Map<String, dynamic>> getProjectById(String id) async {
     try {
-      final response = await _networkService.get<Map<String, dynamic>>(
+      final response = await _networkService.get(
         ApiEndpoints.getProjectById.replaceAll('{id}', id),
       );
-      return response as Map<String, dynamic>;
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return data;
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
+      print('ProjectApiService.getProjectById error: $e');
       throw Exception('Failed to get project: ${e.toString()}');
     }
   }
@@ -60,12 +80,17 @@ class ProjectApiService {
   /// Create project
   Future<Map<String, dynamic>> createProject(Map<String, dynamic> data) async {
     try {
-      final response = await _networkService.post<Map<String, dynamic>>(
+      final response = await _networkService.post(
         ApiEndpoints.createProject,
         data: data,
       );
-      return response as Map<String, dynamic>;
+      final responseData = response.data;
+      if (responseData is Map<String, dynamic>) {
+        return responseData;
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
+      print('ProjectApiService.createProject error: $e');
       throw Exception('Failed to create project: ${e.toString()}');
     }
   }
@@ -73,12 +98,17 @@ class ProjectApiService {
   /// Update project
   Future<Map<String, dynamic>> updateProject(String id, Map<String, dynamic> data) async {
     try {
-      final response = await _networkService.put<Map<String, dynamic>>(
+      final response = await _networkService.put(
         ApiEndpoints.updateProject.replaceAll('{id}', id),
         data: data,
       );
-      return response as Map<String, dynamic>;
+      final responseData = response.data;
+      if (responseData is Map<String, dynamic>) {
+        return responseData;
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
+      print('ProjectApiService.updateProject error: $e');
       throw Exception('Failed to update project: ${e.toString()}');
     }
   }
@@ -90,6 +120,7 @@ class ProjectApiService {
         ApiEndpoints.deleteProject.replaceAll('{id}', id),
       );
     } catch (e) {
+      print('ProjectApiService.deleteProject error: $e');
       throw Exception('Failed to delete project: ${e.toString()}');
     }
   }

@@ -11,11 +11,16 @@ class EducationApiService {
   /// Get all education entries
   Future<Map<String, dynamic>> getAllEducation() async {
     try {
-      final response = await _networkService.get<Map<String, dynamic>>(
+      final response = await _networkService.get(
         ApiEndpoints.getEducation,
       );
-      return response as Map<String, dynamic>;
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return data;
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
+      print('EducationApiService.getAllEducation error: $e');
       throw Exception('Failed to get education: ${e.toString()}');
     }
   }
@@ -23,11 +28,16 @@ class EducationApiService {
   /// Get education by ID
   Future<Map<String, dynamic>> getEducationById(String id) async {
     try {
-      final response = await _networkService.get<Map<String, dynamic>>(
+      final response = await _networkService.get(
         ApiEndpoints.getEducationById.replaceAll('{id}', id),
       );
-      return response as Map<String, dynamic>;
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return data;
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
+      print('EducationApiService.getEducationById error: $e');
       throw Exception('Failed to get education: ${e.toString()}');
     }
   }
@@ -35,12 +45,17 @@ class EducationApiService {
   /// Create education entry
   Future<Map<String, dynamic>> createEducation(Map<String, dynamic> data) async {
     try {
-      final response = await _networkService.post<Map<String, dynamic>>(
+      final response = await _networkService.post(
         ApiEndpoints.createEducation,
         data: data,
       );
-      return response as Map<String, dynamic>;
+      final responseData = response.data;
+      if (responseData is Map<String, dynamic>) {
+        return responseData;
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
+      print('EducationApiService.createEducation error: $e');
       throw Exception('Failed to create education: ${e.toString()}');
     }
   }
@@ -48,12 +63,17 @@ class EducationApiService {
   /// Update education entry
   Future<Map<String, dynamic>> updateEducation(String id, Map<String, dynamic> data) async {
     try {
-      final response = await _networkService.put<Map<String, dynamic>>(
+      final response = await _networkService.put(
         ApiEndpoints.updateEducation.replaceAll('{id}', id),
         data: data,
       );
-      return response as Map<String, dynamic>;
+      final responseData = response.data;
+      if (responseData is Map<String, dynamic>) {
+        return responseData;
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
+      print('EducationApiService.updateEducation error: $e');
       throw Exception('Failed to update education: ${e.toString()}');
     }
   }
@@ -65,6 +85,7 @@ class EducationApiService {
         ApiEndpoints.deleteEducation.replaceAll('{id}', id),
       );
     } catch (e) {
+      print('EducationApiService.deleteEducation error: $e');
       throw Exception('Failed to delete education: ${e.toString()}');
     }
   }

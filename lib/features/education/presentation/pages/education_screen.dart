@@ -2,6 +2,7 @@ import 'package:codewithnarendra/core/constants/app_colors.dart';
 import 'package:codewithnarendra/core/constants/app_icons.dart';
 import 'package:codewithnarendra/core/constants/app_sizes.dart';
 import 'package:codewithnarendra/core/constants/app_strings.dart';
+import 'package:codewithnarendra/core/widgets/error_widget.dart';
 import 'package:codewithnarendra/features/education/presentation/providers/education_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,26 +16,22 @@ class EducationScreen extends ConsumerWidget {
     final educationState = ref.watch(educationStateProvider);
     final educationNotifier = ref.read(educationNotifierProvider.notifier);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.navEducation),
-        backgroundColor: AppColors.transparent,
-        elevation: 0,
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await educationNotifier.getEducation();
-        },
-        child: educationState.status == EducationStatus.loading
-            ? const Center(child: CircularProgressIndicator())
-            : educationState.status == EducationStatus.error
-                ? _buildErrorWidget(educationState.errorMessage!, educationNotifier)
-                : _buildEducationList(educationState.educationList, educationNotifier),
-      ),
+    return RefreshIndicator(
+      onRefresh: () async {
+        await educationNotifier.getEducation();
+      },
+      child: educationState.status == EducationStatus.loading
+          ? const Center(child: CircularProgressIndicator())
+          : educationState.status == EducationStatus.error
+              ? AppErrorWidget.fromException(
+                  educationState.errorMessage,
+                  onRetry: () => educationNotifier.getEducation(),
+                )
+              : _buildEducationList(educationState.educationList?['data'] ?? [], educationNotifier),
     );
   }
 
-  Widget _buildEducationList(educationList, educationNotifier) {
+  Widget _buildEducationList(List<dynamic> educationList, educationNotifier) {
     if (educationList.isEmpty) {
       return Center(
         child: Column(
@@ -78,12 +75,26 @@ class EducationScreen extends ConsumerWidget {
       itemCount: educationList.length,
       itemBuilder: (context, index) {
         final education = educationList[index];
-        return _buildEducationCard(education);
+        return _buildEducationCard(education as Map<String, dynamic>);
       },
     );
   }
 
-  Widget _buildEducationCard(education) {
+  Widget _buildEducationCard(Map<String, dynamic> education) {
+    // Parse dates from API
+    DateTime? startDate;
+    DateTime? endDate;
+    try {
+      if (education['startDate'] != null) {
+        startDate = DateTime.parse(education['startDate'].toString());
+      }
+      if (education['endDate'] != null) {
+        endDate = DateTime.parse(education['endDate'].toString());
+      }
+    } catch (e) {
+      // Keep null if parsing fails
+    }
+
     return Card(
       elevation: AppSizes.elevationSM,
       margin: const EdgeInsets.only(bottom: AppSizes.marginMD),
@@ -96,7 +107,7 @@ class EducationScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              education.institution,
+              education['institution']?.toString() ?? 'Unknown Institution',
               style: const TextStyle(
                 fontSize: AppSizes.fontLG,
                 fontWeight: FontWeight.bold,
@@ -105,7 +116,7 @@ class EducationScreen extends ConsumerWidget {
             ),
             const SizedBox(height: AppSizes.spacingSM),
             Text(
-              education.degree,
+              education['degree']?.toString() ?? 'Unknown Degree',
               style: const TextStyle(
                 fontSize: AppSizes.fontMD,
                 color: AppColors.primary,
@@ -114,7 +125,7 @@ class EducationScreen extends ConsumerWidget {
             ),
             const SizedBox(height: AppSizes.spacingSM),
             Text(
-              education.field,
+              education['field']?.toString() ?? 'General',
               style: TextStyle(
                 fontSize: AppSizes.fontSM,
                 color: AppColors.grey600,
@@ -130,7 +141,7 @@ class EducationScreen extends ConsumerWidget {
                 ),
                 const SizedBox(width: AppSizes.spacingXS),
                 Text(
-                  '${_formatDate(education.startDate)} - ${education.endDate != null ? _formatDate(education.endDate!) : AppStrings.educationPresent}',
+                  '${startDate != null ? _formatDate(startDate) : 'N/A'} - ${endDate != null ? _formatDate(endDate) : AppStrings.educationPresent}',
                   style: TextStyle(
                     fontSize: AppSizes.fontXS,
                     color: AppColors.grey500,
@@ -138,7 +149,7 @@ class EducationScreen extends ConsumerWidget {
                 ),
               ],
             ),
-            if (education.gpa != null && education.gpa!.isNotEmpty) ...[
+            if (education['gpa'] != null && education['gpa'].toString().isNotEmpty) ...[
               const SizedBox(height: AppSizes.spacingSM),
               Row(
                 children: [
@@ -149,7 +160,7 @@ class EducationScreen extends ConsumerWidget {
                   ),
                   const SizedBox(width: AppSizes.spacingXS),
                   Text(
-                    'GPA: ${education.gpa}',
+                    'GPA: ${education['gpa']}',
                     style: TextStyle(
                       fontSize: AppSizes.fontXS,
                       color: AppColors.grey500,
@@ -158,10 +169,10 @@ class EducationScreen extends ConsumerWidget {
                 ],
               ),
             ],
-            if (education.description != null && education.description!.isNotEmpty) ...[
+            if (education['description'] != null && education['description'].toString().isNotEmpty) ...[
               const SizedBox(height: AppSizes.spacingSM),
               Text(
-                education.description!,
+                education['description'].toString(),
                 style: TextStyle(
                   fontSize: AppSizes.fontXS,
                   color: AppColors.grey600,
@@ -178,34 +189,4 @@ class EducationScreen extends ConsumerWidget {
     return '${date.day}/${date.month}/${date.year}';
   }
 
-  Widget _buildErrorWidget(String errorMessage, educationNotifier) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            AppIcons.error,
-            size: AppSizes.iconXXXXL,
-            color: AppColors.error,
-          ),
-          const SizedBox(height: AppSizes.spacingMD),
-          Text(
-            errorMessage,
-            style: const TextStyle(
-              fontSize: AppSizes.fontMD,
-              color: AppColors.error,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppSizes.spacingMD),
-          ElevatedButton(
-            onPressed: () {
-              educationNotifier.getEducation();
-            },
-            child: const Text(AppStrings.actionRetry),
-          ),
-        ],
-      ),
-    );
-  }
 }

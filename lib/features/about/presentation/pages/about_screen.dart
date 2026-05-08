@@ -206,43 +206,38 @@ class AboutScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () async {
-            // TODO: Refresh data from API
-            await Future.delayed(const Duration(seconds: 1));
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              children: [
-                // Hero Section
-                _buildHeroSection(context, l10n, isDark),
+    return RefreshIndicator(
+      onRefresh: () async {
+        // TODO: Refresh data from API
+        await Future.delayed(const Duration(seconds: 1));
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          children: [
+            // Hero Section
+            _buildHeroSection(context, l10n, isDark),
 
-                // Stats Section
-                _buildStatsSection(context, l10n, isDark),
+            // Stats Section
+            _buildStatsSection(context, l10n, isDark),
 
-                // About Section
-                _buildAboutSection(context, l10n, isDark),
+            // About Section
+            _buildAboutSection(context, l10n, isDark),
 
-                // Skills Section
-                _buildSkillsSection(context, l10n, isDark),
+            // Skills Section
+            _buildSkillsSection(context, l10n, isDark),
 
-                // Services Section
-                _buildServicesSection(context, l10n, isDark),
+            // Services Section
+            _buildServicesSection(context, l10n, isDark),
 
-                // Contact Section
-                _buildContactSection(context, l10n, isDark),
+            // Contact Section
+            _buildContactSection(context, l10n, isDark),
 
-                // Social Links
-                _buildSocialSection(context, l10n, isDark),
+            // Social Links
+            _buildSocialSection(context, l10n, isDark),
 
-                const SizedBox(height: 40),
-              ],
-            ),
-          ),
+            const SizedBox(height: 40),
+          ],
         ),
       ),
     );

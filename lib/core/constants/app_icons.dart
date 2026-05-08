@@ -44,6 +44,7 @@ class AppIcons {
   static const IconData info = Icons.info;
   static const IconData star = Icons.star;
   static const IconData starOutlined = Icons.star_outlined;
+  static const IconData empty = Icons.inbox;
 
   // Social
   static const IconData email = Icons.email;

@@ -44,4 +44,11 @@ class ApiEndpoints {
   static const String createEducation = '/education';
   static const String updateEducation = '/education/{id}';
   static const String deleteEducation = '/education/{id}';
+
+  // Services Endpoints
+  static const String getServices = '/services';
+  static const String getServiceById = '/services/{id}';
+  static const String createService = '/services';
+  static const String updateService = '/services/{id}';
+  static const String deleteService = '/services/{id}';
 }

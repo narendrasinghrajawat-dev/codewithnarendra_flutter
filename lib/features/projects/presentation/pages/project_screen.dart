@@ -2,6 +2,7 @@ import 'package:codewithnarendra/core/constants/app_colors.dart';
 import 'package:codewithnarendra/core/constants/app_icons.dart';
 import 'package:codewithnarendra/core/constants/app_sizes.dart';
 import 'package:codewithnarendra/core/constants/app_strings.dart';
+import 'package:codewithnarendra/core/widgets/error_widget.dart';
 import 'package:codewithnarendra/features/projects/presentation/providers/project_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,42 +17,22 @@ class ProjectScreen extends ConsumerWidget {
     final projectState = ref.watch(projectStateProvider);
     final projectNotifier = ref.read(projectNotifierProvider.notifier);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.navProjects),
-        backgroundColor: AppColors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(AppIcons.add),
-            onPressed: () {
-              // TODO: Navigate to add project screen
-            },
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await projectNotifier.getProjects();
-        },
-        child: projectState.status == ProjectStatus.loading
-            ? const Center(child: CircularProgressIndicator())
-            : projectState.status == ProjectStatus.error
-                ? _buildErrorWidget(projectState.errorMessage!, projectNotifier)
-                : _buildProjectList(projectState.projects, projectNotifier),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Navigate to add project screen
-        },
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.white,
-        child: const Icon(AppIcons.add),
-      ),
+    return RefreshIndicator(
+      onRefresh: () async {
+        await projectNotifier.getProjects();
+      },
+      child: projectState.status == ProjectStatus.loading
+          ? const Center(child: CircularProgressIndicator())
+          : projectState.status == ProjectStatus.error
+              ? AppErrorWidget.fromException(
+                  projectState.errorMessage,
+                  onRetry: () => projectNotifier.getProjects(),
+                )
+              : _buildProjectList(projectState.projects?['data'] ?? [], projectNotifier),
     );
   }
 
-  Widget _buildProjectList(projects, projectNotifier) {
+  Widget _buildProjectList(List<dynamic> projects, projectNotifier) {
     if (projects.isEmpty) {
       return Center(
         child: Column(
@@ -95,12 +76,15 @@ class ProjectScreen extends ConsumerWidget {
       itemCount: projects.length,
       itemBuilder: (context, index) {
         final project = projects[index];
-        return _buildProjectCard(project);
+        return _buildProjectCard(project as Map<String, dynamic>);
       },
     );
   }
 
-  Widget _buildProjectCard(project) {
+  Widget _buildProjectCard(Map<String, dynamic> project) {
+    // Safely get technologies as list
+    final technologies = (project['technologies'] as List<dynamic>?) ?? [];
+
     return Card(
       elevation: AppSizes.elevationSM,
       margin: const EdgeInsets.only(bottom: AppSizes.marginMD),
@@ -119,7 +103,7 @@ class ProjectScreen extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  if (project.isFeatured)
+                  if (project['isFeatured'] == true)
                     Icon(
                       AppIcons.star,
                       size: AppSizes.iconSM,
@@ -127,7 +111,7 @@ class ProjectScreen extends ConsumerWidget {
                     ),
                   Expanded(
                     child: Text(
-                      project.title,
+                      project['title']?.toString() ?? 'Untitled Project',
                       style: const TextStyle(
                         fontSize: AppSizes.fontLG,
                         fontWeight: FontWeight.bold,
@@ -139,7 +123,7 @@ class ProjectScreen extends ConsumerWidget {
               ),
               const SizedBox(height: AppSizes.spacingSM),
               Text(
-                project.description,
+                project['description']?.toString() ?? '',
                 style: TextStyle(
                   fontSize: AppSizes.fontSM,
                   color: AppColors.grey600,
@@ -148,14 +132,14 @@ class ProjectScreen extends ConsumerWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: AppSizes.spacingMD),
-              if (project.technologies.isNotEmpty)
+              if (technologies.isNotEmpty)
                 Wrap(
                   spacing: AppSizes.spacingXS,
                   runSpacing: AppSizes.spacingXS,
-                  children: project.technologies
+                  children: technologies
                       .take(3)
                       .map((tech) => Chip(
-                            label: Text(tech),
+                            label: Text(tech.toString()),
                             backgroundColor: AppColors.primaryLight,
                             labelStyle: TextStyle(
                               fontSize: AppSizes.fontXS,
@@ -199,34 +183,4 @@ class ProjectScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildErrorWidget(String errorMessage, projectNotifier) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            AppIcons.error,
-            size: AppSizes.iconXXXXL,
-            color: AppColors.error,
-          ),
-          const SizedBox(height: AppSizes.spacingMD),
-          Text(
-            errorMessage,
-            style: const TextStyle(
-              fontSize: AppSizes.fontMD,
-              color: AppColors.error,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppSizes.spacingMD),
-          ElevatedButton(
-            onPressed: () {
-              projectNotifier.getProjects();
-            },
-            child: const Text(AppStrings.actionRetry),
-          ),
-        ],
-      ),
-    );
-  }
 }

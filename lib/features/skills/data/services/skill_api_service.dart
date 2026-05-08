@@ -10,12 +10,29 @@ class SkillApiService {
 
   /// Get all skills
   Future<Map<String, dynamic>> getAllSkills() async {
+    print('========== SKILL API CALL START ==========');
+    print('SkillApiService.getAllSkills called');
     try {
-      final response = await _networkService.get<Map<String, dynamic>>(
+      final response = await _networkService.get(
         ApiEndpoints.getSkills,
       );
-      return response as Map<String, dynamic>;
+      print('SkillApiService: Response received');
+      print('SkillApiService: Response.runtimeType = ${response.runtimeType}');
+      
+      // Extract data from Dio response
+      final data = response.data;
+      print('SkillApiService: data.runtimeType = ${data.runtimeType}');
+      print('SkillApiService: data = $data');
+      
+      if (data is Map<String, dynamic>) {
+        print('SkillApiService: Data is Map<String, dynamic> - SUCCESS');
+        print('========== SKILL API CALL END ==========');
+        return data;
+      }
+      throw Exception('Invalid response format: expected Map, got ${data.runtimeType}');
     } catch (e) {
+      print('SkillApiService.getAllSkills ERROR: $e');
+      print('========== SKILL API CALL END (ERROR) ==========');
       throw Exception('Failed to get skills: ${e.toString()}');
     }
   }
@@ -23,11 +40,16 @@ class SkillApiService {
   /// Get featured skills
   Future<Map<String, dynamic>> getFeaturedSkills() async {
     try {
-      final response = await _networkService.get<Map<String, dynamic>>(
+      final response = await _networkService.get(
         ApiEndpoints.getFeaturedSkills,
       );
-      return response as Map<String, dynamic>;
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return data;
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
+      print('SkillApiService.getFeaturedSkills error: $e');
       throw Exception('Failed to get featured skills: ${e.toString()}');
     }
   }
@@ -35,11 +57,16 @@ class SkillApiService {
   /// Get skills by category
   Future<Map<String, dynamic>> getSkillsByCategory(String category) async {
     try {
-      final response = await _networkService.get<Map<String, dynamic>>(
+      final response = await _networkService.get(
         ApiEndpoints.getSkillsByCategory.replaceAll('{category}', category),
       );
-      return response as Map<String, dynamic>;
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return data;
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
+      print('SkillApiService.getSkillsByCategory error: $e');
       throw Exception('Failed to get skills by category: ${e.toString()}');
     }
   }
@@ -47,11 +74,16 @@ class SkillApiService {
   /// Get skills by level
   Future<Map<String, dynamic>> getSkillsByLevel(String level) async {
     try {
-      final response = await _networkService.get<Map<String, dynamic>>(
+      final response = await _networkService.get(
         ApiEndpoints.getSkillsByLevel.replaceAll('{level}', level),
       );
-      return response as Map<String, dynamic>;
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return data;
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
+      print('SkillApiService.getSkillsByLevel error: $e');
       throw Exception('Failed to get skills by level: ${e.toString()}');
     }
   }
@@ -59,11 +91,16 @@ class SkillApiService {
   /// Get skill by ID
   Future<Map<String, dynamic>> getSkillById(String id) async {
     try {
-      final response = await _networkService.get<Map<String, dynamic>>(
+      final response = await _networkService.get(
         ApiEndpoints.getSkillById.replaceAll('{id}', id),
       );
-      return response as Map<String, dynamic>;
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return data;
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
+      print('SkillApiService.getSkillById error: $e');
       throw Exception('Failed to get skill: ${e.toString()}');
     }
   }
@@ -71,12 +108,17 @@ class SkillApiService {
   /// Create skill
   Future<Map<String, dynamic>> createSkill(Map<String, dynamic> data) async {
     try {
-      final response = await _networkService.post<Map<String, dynamic>>(
+      final response = await _networkService.post(
         ApiEndpoints.createSkill,
         data: data,
       );
-      return response as Map<String, dynamic>;
+      final responseData = response.data;
+      if (responseData is Map<String, dynamic>) {
+        return responseData;
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
+      print('SkillApiService.createSkill error: $e');
       throw Exception('Failed to create skill: ${e.toString()}');
     }
   }
@@ -84,12 +126,17 @@ class SkillApiService {
   /// Update skill
   Future<Map<String, dynamic>> updateSkill(String id, Map<String, dynamic> data) async {
     try {
-      final response = await _networkService.put<Map<String, dynamic>>(
+      final response = await _networkService.put(
         ApiEndpoints.updateSkill.replaceAll('{id}', id),
         data: data,
       );
-      return response as Map<String, dynamic>;
+      final responseData = response.data;
+      if (responseData is Map<String, dynamic>) {
+        return responseData;
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
+      print('SkillApiService.updateSkill error: $e');
       throw Exception('Failed to update skill: ${e.toString()}');
     }
   }
@@ -101,6 +148,7 @@ class SkillApiService {
         ApiEndpoints.deleteSkill.replaceAll('{id}', id),
       );
     } catch (e) {
+      print('SkillApiService.deleteSkill error: $e');
       throw Exception('Failed to delete skill: ${e.toString()}');
     }
   }

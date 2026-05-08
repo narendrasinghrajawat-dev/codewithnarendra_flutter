@@ -2,6 +2,7 @@ import 'package:codewithnarendra/core/constants/app_colors.dart';
 import 'package:codewithnarendra/core/constants/app_icons.dart';
 import 'package:codewithnarendra/core/constants/app_sizes.dart';
 import 'package:codewithnarendra/core/constants/app_strings.dart';
+import 'package:codewithnarendra/core/widgets/error_widget.dart';
 import 'package:codewithnarendra/features/skills/presentation/providers/skill_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,42 +16,22 @@ class SkillScreen extends ConsumerWidget {
     final skillState = ref.watch(skillStateProvider);
     final skillNotifier = ref.read(skillNotifierProvider.notifier);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.navSkills),
-        backgroundColor: AppColors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(AppIcons.add),
-            onPressed: () {
-              // TODO: Navigate to add skill screen
-            },
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await skillNotifier.getSkills();
-        },
-        child: skillState.status == SkillStatus.loading
-            ? const Center(child: CircularProgressIndicator())
-            : skillState.status == SkillStatus.error
-                ? _buildErrorWidget(skillState.errorMessage!, skillNotifier)
-                : _buildSkillList(skillState.skills, skillNotifier),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Navigate to add skill screen
-        },
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.white,
-        child: const Icon(AppIcons.add),
-      ),
+    return RefreshIndicator(
+      onRefresh: () async {
+        await skillNotifier.getSkills();
+      },
+      child: skillState.status == SkillStatus.loading
+          ? const Center(child: CircularProgressIndicator())
+          : skillState.status == SkillStatus.error
+              ? AppErrorWidget.fromException(
+                  skillState.errorMessage,
+                  onRetry: () => skillNotifier.getSkills(),
+                )
+              : _buildSkillList(skillState.skills?['data'] ?? [], skillNotifier),
     );
   }
 
-  Widget _buildSkillList(skills, skillNotifier) {
+  Widget _buildSkillList(List<dynamic> skills, skillNotifier) {
     if (skills.isEmpty) {
       return Center(
         child: Column(
@@ -94,12 +75,12 @@ class SkillScreen extends ConsumerWidget {
       itemCount: skills.length,
       itemBuilder: (context, index) {
         final skill = skills[index];
-        return _buildSkillCard(skill);
+        return _buildSkillCard(skill as Map<String, dynamic>);
       },
     );
   }
 
-  Widget _buildSkillCard(skill) {
+  Widget _buildSkillCard(Map<String, dynamic> skill) {
     return Card(
       elevation: AppSizes.elevationSM,
       margin: const EdgeInsets.only(bottom: AppSizes.marginMD),
@@ -113,16 +94,16 @@ class SkillScreen extends ConsumerWidget {
           children: [
             Row(
               children: [
-                if (skill.icon != null)
+                if (skill['icon'] != null)
                   Icon(
-                    _getIconData(skill.icon!),
+                    _getIconData(skill['icon'].toString()),
                     size: AppSizes.iconMD,
                     color: AppColors.primary,
                   ),
                 const SizedBox(width: AppSizes.spacingSM),
                 Expanded(
                   child: Text(
-                    skill.name,
+                    skill['name']?.toString() ?? 'Unnamed',
                     style: const TextStyle(
                       fontSize: AppSizes.fontLG,
                       fontWeight: FontWeight.bold,
@@ -136,7 +117,7 @@ class SkillScreen extends ConsumerWidget {
             Row(
               children: [
                 Text(
-                  skill.level,
+                  skill['level']?.toString() ?? 'Beginner',
                   style: const TextStyle(
                     fontSize: AppSizes.fontSM,
                     color: AppColors.primary,
@@ -153,7 +134,7 @@ class SkillScreen extends ConsumerWidget {
                 ),
                 const SizedBox(width: AppSizes.spacingSM),
                 Text(
-                  skill.category,
+                  skill['category']?.toString() ?? 'General',
                   style: TextStyle(
                     fontSize: AppSizes.fontSM,
                     color: AppColors.grey600,
@@ -171,7 +152,7 @@ class SkillScreen extends ConsumerWidget {
                 ),
                 const SizedBox(width: AppSizes.spacingXS),
                 Text(
-                  '${skill.yearsOfExperience} ${skill.yearsOfExperience == 1 ? 'year' : 'years'}',
+                  '${skill['yearsOfExperience'] ?? 0} ${(skill['yearsOfExperience'] ?? 0) == 1 ? 'year' : 'years'}',
                   style: TextStyle(
                     fontSize: AppSizes.fontXS,
                     color: AppColors.grey500,
@@ -179,10 +160,10 @@ class SkillScreen extends ConsumerWidget {
                 ),
               ],
             ),
-            if (skill.description != null && skill.description!.isNotEmpty) ...[
+            if (skill['description'] != null && skill['description'].toString().isNotEmpty) ...[
               const SizedBox(height: AppSizes.spacingSM),
               Text(
-                skill.description!,
+                skill['description'].toString(),
                 style: TextStyle(
                   fontSize: AppSizes.fontXS,
                   color: AppColors.grey600,
@@ -200,34 +181,4 @@ class SkillScreen extends ConsumerWidget {
     return AppIcons.projects;
   }
 
-  Widget _buildErrorWidget(String errorMessage, skillNotifier) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            AppIcons.error,
-            size: AppSizes.iconXXXXL,
-            color: AppColors.error,
-          ),
-          const SizedBox(height: AppSizes.spacingMD),
-          Text(
-            errorMessage,
-            style: const TextStyle(
-              fontSize: AppSizes.fontMD,
-              color: AppColors.error,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppSizes.spacingMD),
-          ElevatedButton(
-            onPressed: () {
-              skillNotifier.getSkills();
-            },
-            child: const Text(AppStrings.actionRetry),
-          ),
-        ],
-      ),
-    );
-  }
 }

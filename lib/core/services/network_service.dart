@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/env_config.dart';
 import '../exceptions/app_exceptions.dart';
@@ -6,6 +7,8 @@ import '../exceptions/app_exceptions.dart';
 class NetworkService {
   late Dio _dio;
   String? _authToken;
+  VoidCallback? _onUnauthorized;
+  bool _isHandlingUnauthorized = false;
   
   NetworkService() {
     _dio = Dio(BaseOptions(
@@ -61,6 +64,17 @@ class NetworkService {
         onError: (error, handler) {
           final exception = _handleError(error);
           print('Error: ${exception.toString()}');
+          
+          // Handle 401 Unauthorized - redirect to login (prevent multiple calls)
+          if (error.response?.statusCode == 401 && _onUnauthorized != null && !_isHandlingUnauthorized) {
+            _isHandlingUnauthorized = true;
+            _onUnauthorized!();
+            // Reset after a delay to allow future handling
+            Future.delayed(const Duration(seconds: 2), () {
+              _isHandlingUnauthorized = false;
+            });
+          }
+          
           // Create new DioException with the converted error
           final convertedError = DioException(
             requestOptions: error.requestOptions,
@@ -145,12 +159,17 @@ class NetworkService {
 
     print('GET called: $path');
     try {
-      return await _dio.get<T>(
+      final response = await _dio.get<T>(
         path,
         queryParameters: queryParameters,
         options: options,
       );
+      print('GET SUCCESS: ${response.statusCode}');
+      print('GET RESPONSE DATA: ${response.data}');
+      return response;
     } on DioException catch (e) {
+      print('GET ERROR: ${e.message}');
+      print('GET ERROR TYPE: ${e.type}');
       throw _handleError(e);
     }
   }
@@ -165,13 +184,17 @@ class NetworkService {
     print('POST data: $data');
 
     try {
-      return await _dio.post<T>(
+      final response = await _dio.post<T>(
         path,
         data: data,
         queryParameters: queryParameters,
         options: options,
       );
+      print('POST SUCCESS: ${response.statusCode}');
+      print('POST RESPONSE: ${response.data}');
+      return response;
     } on DioException catch (e) {
+      print('POST ERROR: ${e.message}');
       throw _handleError(e);
     }
   }
@@ -183,12 +206,14 @@ class NetworkService {
     Options? options,
   }) async {
     try {
-      return await _dio.put<T>(
+      final response = await _dio.put<T>(
         path,
         data: data,
         queryParameters: queryParameters,
         options: options,
       );
+      print('PUT response: ${response.data}');
+      return response;
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -201,20 +226,40 @@ class NetworkService {
     Options? options,
   }) async {
     try {
-      return await _dio.delete<T>(
+      final response = await _dio.delete<T>(
         path,
         data: data,
         queryParameters: queryParameters,
         options: options,
       );
+      print('DELETE response: ${response.data}');
+      return response;
     } on DioException catch (e) {
       throw _handleError(e);
     }
   }
   
-  void setAuthToken(String token) {
+  void setAuthToken(String? token) {
     _authToken = token;
-    _dio.options.headers['Authorization'] = 'Bearer $token';
+    if (_authToken != null) {
+      _dio.options.headers['Authorization'] = 'Bearer $_authToken';
+    } else {
+      _dio.options.headers.remove('Authorization');
+    }
+  }
+  
+  void setOnUnauthorizedCallback(VoidCallback callback) {
+    _onUnauthorized = callback;
+    _isHandlingUnauthorized = false; // Reset flag when setting new callback
+  }
+  
+  void clearOnUnauthorizedCallback() {
+    _onUnauthorized = null;
+    _isHandlingUnauthorized = false;
+  }
+  
+  void resetUnauthorizedFlag() {
+    _isHandlingUnauthorized = false;
   }
   
   void clearAuthToken() {

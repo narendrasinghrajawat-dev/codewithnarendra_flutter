@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/constants/app_sizes.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/services/localization_service.dart';
 import '../../../../../core/widgets/app_text.dart';
 import '../../../../../core/widgets/responsive_builder.dart';
 import '../widgets/admin_form_components.dart';
@@ -436,12 +437,29 @@ class _ContactManagementPageState extends ConsumerState<ContactManagementPage> {
   }
 
   Future<void> _saveContactData() async {
-    // TODO: Save contact data to API/storage
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Contact data saved successfully!'),
-        backgroundColor: AppColors.success,
-      ),
-    );
+    final localizations = ref.read(localizationStateProvider);
+    final isHindi = localizations.language == AppLanguage.hi;
+    
+    try {
+      // TODO: Save contact data to API/storage
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(getLocalizedString('contactSaved', isHindi ? AppLanguage.hi : AppLanguage.en)),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${getLocalizedString('contactSaveFailed', isHindi ? AppLanguage.hi : AppLanguage.en)}: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
