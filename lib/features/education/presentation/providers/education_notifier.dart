@@ -43,11 +43,9 @@ class EducationNotifier extends StateNotifier<EducationState> {
     state = state.copyWith(status: EducationStatus.loading);
     
     try {
-      final createdEducation = await _createEducationUseCase(data);
-      state = state.copyWith(
-        status: EducationStatus.loaded,
-        educationList: createdEducation,
-      );
+      await _createEducationUseCase(data);
+      // Refresh education list after creating
+      await getEducation();
     } catch (e) {
       state = state.copyWith(
         status: EducationStatus.error,
@@ -60,11 +58,9 @@ class EducationNotifier extends StateNotifier<EducationState> {
     state = state.copyWith(status: EducationStatus.loading);
     
     try {
-      final updatedEducation = await _updateEducationUseCase(id, data);
-      state = state.copyWith(
-        status: EducationStatus.loaded,
-        educationList: updatedEducation,
-      );
+      await _updateEducationUseCase(id, data);
+      // Refresh education list after updating
+      await getEducation();
     } catch (e) {
       state = state.copyWith(
         status: EducationStatus.error,
@@ -78,10 +74,8 @@ class EducationNotifier extends StateNotifier<EducationState> {
     
     try {
       await _deleteEducationUseCase(id);
-      state = state.copyWith(
-        status: EducationStatus.loaded,
-        educationList: null,
-      );
+      // Refresh education list after deleting
+      await getEducation();
     } catch (e) {
       state = state.copyWith(
         status: EducationStatus.error,

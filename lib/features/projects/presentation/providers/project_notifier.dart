@@ -43,11 +43,9 @@ class ProjectNotifier extends StateNotifier<ProjectState> {
     state = state.copyWith(status: ProjectStatus.loading);
     
     try {
-      final createdProject = await _createProjectUseCase(data);
-      state = state.copyWith(
-        status: ProjectStatus.loaded,
-        projects: createdProject,
-      );
+      await _createProjectUseCase(data);
+      // Refresh projects list after creating
+      await getProjects();
     } catch (e) {
       state = state.copyWith(
         status: ProjectStatus.error,
@@ -60,11 +58,9 @@ class ProjectNotifier extends StateNotifier<ProjectState> {
     state = state.copyWith(status: ProjectStatus.loading);
     
     try {
-      final updatedProject = await _updateProjectUseCase(id, data);
-      state = state.copyWith(
-        status: ProjectStatus.loaded,
-        projects: updatedProject,
-      );
+      await _updateProjectUseCase(id, data);
+      // Refresh projects list after updating
+      await getProjects();
     } catch (e) {
       state = state.copyWith(
         status: ProjectStatus.error,
@@ -78,10 +74,8 @@ class ProjectNotifier extends StateNotifier<ProjectState> {
     
     try {
       await _deleteProjectUseCase(id);
-      state = state.copyWith(
-        status: ProjectStatus.loaded,
-        projects: null,
-      );
+      // Refresh projects list after deleting
+      await getProjects();
     } catch (e) {
       state = state.copyWith(
         status: ProjectStatus.error,

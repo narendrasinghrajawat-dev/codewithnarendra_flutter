@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../../../../core/widgets/common_text.dart';
 import '../../../../../core/constants/app_sizes.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/services/localization_service.dart';
@@ -45,6 +47,7 @@ class _ContactManagementPageState extends ConsumerState<ContactManagementPage> {
   }
 
   Widget _buildMobileLayout() {
+    final l10n = AppLocalizations.of(context)!;
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSizes.paddingMD),
@@ -56,7 +59,7 @@ class _ContactManagementPageState extends ConsumerState<ContactManagementPage> {
               const SizedBox(height: AppSizes.spacingLG),
               _buildContactList(),
               const SizedBox(height: AppSizes.spacingLG),
-              _buildAddContactButton(),
+              _buildAddContactButton(l10n),
             ],
           ),
         ),
@@ -65,6 +68,7 @@ class _ContactManagementPageState extends ConsumerState<ContactManagementPage> {
   }
 
   Widget _buildTabletLayout() {
+    final l10n = AppLocalizations.of(context)!;
     return SafeArea(
       child: Row(
         children: [
@@ -80,7 +84,7 @@ class _ContactManagementPageState extends ConsumerState<ContactManagementPage> {
                     const SizedBox(height: AppSizes.spacingXL),
                     _buildContactList(),
                     const SizedBox(height: AppSizes.spacingXL),
-                    _buildAddContactButton(),
+                    _buildAddContactButton(l10n),
                   ],
                 ),
               ),
@@ -92,6 +96,7 @@ class _ContactManagementPageState extends ConsumerState<ContactManagementPage> {
   }
 
   Widget _buildDesktopLayout() {
+    final l10n = AppLocalizations.of(context)!;
     return SafeArea(
       child: Row(
         children: [
@@ -107,7 +112,7 @@ class _ContactManagementPageState extends ConsumerState<ContactManagementPage> {
                     const SizedBox(height: AppSizes.spacingXL),
                     _buildContactList(),
                     const SizedBox(height: AppSizes.spacingXL),
-                    _buildAddContactButton(),
+                    _buildAddContactButton(l10n),
                   ],
                 ),
               ),
@@ -223,7 +228,7 @@ class _ContactManagementPageState extends ConsumerState<ContactManagementPage> {
     );
   }
 
-  Widget _buildAddContactButton() {
+  Widget _buildAddContactButton(AppLocalizations l10n) {
     return ResponsiveContainer(
       mobilePadding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingSM),
       desktopPadding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingMD),
@@ -239,46 +244,47 @@ class _ContactManagementPageState extends ConsumerState<ContactManagementPage> {
               borderRadius: BorderRadius.circular(AppSizes.radiusMD),
             ),
           ),
-          child: AppText.button('Add New Contact'),
+          child: AppText.button(l10n.addNewContact),
         ),
       ),
     );  
   }
 
   void _showAddContactDialog() {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Add New Contact'),
+          title: Text(l10n.addNewContact),
           content: SizedBox(
             width: 400,
             child: ResponsiveColumn(
               children: [
                 AdminFormComponents.buildTextField(
-                  label: 'Name',
+                  label: l10n.name,
                   controller: _nameController,
-                  hintText: 'e.g. John Doe',
+                  hintText: l10n.enterNameHint,
                 ),
                 const SizedBox(height: AppSizes.spacingMD),
                 AdminFormComponents.buildTextField(
-                  label: 'Email',
+                  label: l10n.authEmail,
                   controller: _emailController,
-                  hintText: 'john.doe@example.com',
+                  hintText: l10n.enterEmailHint,
                   keyboardType: TextInputType.emailAddress,
                 ),
                 const SizedBox(height: AppSizes.spacingMD),
                 AdminFormComponents.buildTextField(
-                  label: 'Phone',
+                  label: l10n.contactPhone,
                   controller: _phoneController,
-                  hintText: '+1 (555) 123-4567',
+                  hintText: l10n.enterPhoneHint,
                   keyboardType: TextInputType.phone,
                 ),
                 const SizedBox(height: AppSizes.spacingMD),
                 AdminFormComponents.buildTextArea(
-                  label: 'Message',
+                  label: l10n.contactMessage,
                   controller: _messageController,
-                  hintText: 'Enter your message here...',
+                  hintText: l10n.enterMessageHint,
                   maxLines: 3,
                 ),
               ],
@@ -289,11 +295,11 @@ class _ContactManagementPageState extends ConsumerState<ContactManagementPage> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('Cancel'),
+              child: Text(l10n.commonCancel),
             ),
             ElevatedButton(
               onPressed: _addNewContact,
-              child: const Text('Add'),
+              child: Text(l10n.commonAdd),
             ),
           ],
         );

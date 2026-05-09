@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../../../../core/widgets/common_text.dart';
 import '../../../../core/config/app_theme_colors.dart';
 import '../../../../core/services/localization_service.dart';
 import '../../../../core/services/theme_service.dart';
@@ -78,6 +80,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
   }
 
   Widget _buildAccessDeniedScreen(BuildContext context, bool isDark) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: isDark ? AppThemeColors.darkBackground : AppThemeColors.lightBackground,
       body: Center(
@@ -112,7 +115,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
               ),
               const SizedBox(height: 24),
               Text(
-                'Access Denied',
+                l10n.accessDenied,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: isDark ? Colors.white : Colors.black87,
@@ -120,7 +123,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
               ),
               const SizedBox(height: 8),
               Text(
-                'You need admin privileges to access this page.',
+                l10n.accessDeniedMessage,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: isDark ? Colors.white70 : Colors.black54,
                 ),
@@ -130,7 +133,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
               FilledButton.icon(
                 onPressed: () => Navigator.of(context).pop(),
                 icon: const Icon(Icons.arrow_back),
-                label: const Text('Go Back'),
+                label: Text(l10n.goBack),
               ),
             ],
           ),
@@ -199,6 +202,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
   }
 
   Widget _buildSidebar(BuildContext context, bool isDark, {required bool isExpanded}) {
+    final l10n = AppLocalizations.of(context)!;
     final localizations = ref.watch(localizationStateProvider);
     final isHindi = localizations.language == AppLanguage.hi;
 
@@ -243,20 +247,14 @@ class _AdminShellState extends ConsumerState<AdminShell> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Admin Panel',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : Colors.black87,
-                              ),
+                            CommonText.medium(
+                              l10n.adminPanel,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : Colors.black87,
                             ),
-                            Text(
-                              'CodeWithNarendra',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isDark ? Colors.white60 : Colors.black54,
-                              ),
+                            CommonText.verySmall(
+                              l10n.appName,
+                              color: isDark ? Colors.white60 : Colors.black54,
                             ),
                           ],
                         ),
@@ -341,7 +339,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
                         isDark: isDark,
                       ),
                       const Spacer(),
-                      _buildLogoutButton(isExpanded: true, isDark: isDark),
+                      _buildLogoutButton(isExpanded: true, isDark: isDark, l10n: l10n),
                     ],
                   )
                 : Column(
@@ -366,7 +364,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
                         isDark: isDark,
                       ),
                       const SizedBox(height: 8),
-                      _buildLogoutButton(isExpanded: false, isDark: isDark),
+                      _buildLogoutButton(isExpanded: false, isDark: isDark, l10n: l10n),
                     ],
                   ),
           ),
@@ -431,15 +429,12 @@ class _AdminShellState extends ConsumerState<AdminShell> {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
+                      child: CommonText.small(
                         label,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                          color: isSelected
-                              ? item.color
-                              : (isDark ? Colors.white70 : Colors.black87),
-                        ),
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                        color: isSelected
+                            ? item.color
+                            : (isDark ? Colors.white70 : Colors.black87),
                       ),
                     ),
                     if (isSelected)
@@ -494,7 +489,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
     );
   }
 
-  Widget _buildLogoutButton({required bool isExpanded, required bool isDark}) {
+  Widget _buildLogoutButton({required bool isExpanded, required bool isDark, required AppLocalizations l10n}) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -514,12 +509,10 @@ class _AdminShellState extends ConsumerState<AdminShell> {
                       size: 20,
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      'Logout',
-                      style: TextStyle(
-                        color: Colors.red.shade400,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    CommonText.small(
+                      l10n.authLogout,
+                      color: Colors.red.shade400,
+                      fontWeight: FontWeight.w500,
                     ),
                   ],
                 ),
@@ -537,15 +530,14 @@ class _AdminShellState extends ConsumerState<AdminShell> {
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context, bool isDark, {required bool showMenu}) {
+    final l10n = AppLocalizations.of(context)!;
     return AppBar(
       elevation: 0,
       backgroundColor: isDark ? AppThemeColors.darkBackground : AppThemeColors.lightBackground,
-      title: Text(
-        widget.title ?? 'Admin Panel',
-        style: TextStyle(
-          color: isDark ? Colors.white : Colors.black87,
-          fontWeight: FontWeight.w600,
-        ),
+      title: CommonText.small(
+        widget.title ?? l10n.adminPanel,
+        color: isDark ? Colors.white : Colors.black87,
+        fontWeight: FontWeight.w600,
       ),
       actions: [
         if (widget.actions != null) ...widget.actions!,
@@ -555,15 +547,14 @@ class _AdminShellState extends ConsumerState<AdminShell> {
   }
 
   PreferredSizeWidget _buildMobileAppBar(BuildContext context, bool isDark) {
+    final l10n = AppLocalizations.of(context)!;
     return AppBar(
       elevation: 0,
       backgroundColor: isDark ? AppThemeColors.darkBackground : AppThemeColors.lightBackground,
-      title: Text(
-        widget.title ?? 'Admin Panel',
-        style: TextStyle(
-          color: isDark ? Colors.white : Colors.black87,
-          fontWeight: FontWeight.w600,
-        ),
+      title: CommonText.small(
+        widget.title ?? l10n.adminPanel,
+        color: isDark ? Colors.white : Colors.black87,
+        fontWeight: FontWeight.w600,
       ),
       actions: [
         if (widget.actions != null) ...widget.actions!,
@@ -586,8 +577,8 @@ class _AdminShellState extends ConsumerState<AdminShell> {
             ref.read(localizationStateProvider.notifier).setLanguage(lang);
           },
           itemBuilder: (context) => [
-            const PopupMenuItem(value: 'en', child: Text('English')),
-            const PopupMenuItem(value: 'hi', child: Text('हिंदी')),
+            PopupMenuItem(value: 'en', child: Text(l10n.english)),
+            PopupMenuItem(value: 'hi', child: Text(l10n.hindi)),
           ],
         ),
         IconButton(

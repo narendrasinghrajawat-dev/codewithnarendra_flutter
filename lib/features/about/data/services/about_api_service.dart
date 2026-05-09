@@ -14,7 +14,7 @@ class AboutApiService {
       final response = await _networkService.get<Map<String, dynamic>>(
         ApiEndpoints.getAbout,
       );
-      return response as Map<String, dynamic>;
+      return response.data as Map<String, dynamic>;
     } catch (e) {
       throw Exception('Failed to get about: ${e.toString()}');
     }
@@ -26,7 +26,7 @@ class AboutApiService {
       final response = await _networkService.get<Map<String, dynamic>>(
         ApiEndpoints.getAboutById.replaceAll('{id}', id),
       );
-      return response as Map<String, dynamic>;
+      return response.data as Map<String, dynamic>;
     } catch (e) {
       throw Exception('Failed to get about: ${e.toString()}');
     }
@@ -39,7 +39,7 @@ class AboutApiService {
         ApiEndpoints.createAbout,
         data: data,
       );
-      return response as Map<String, dynamic>;
+      return response.data as Map<String, dynamic>;
     } catch (e) {
       throw Exception('Failed to create about: ${e.toString()}');
     }
@@ -52,7 +52,7 @@ class AboutApiService {
         ApiEndpoints.updateAbout.replaceAll('{id}', id),
         data: data,
       );
-      return response as Map<String, dynamic>;
+      return response.data as Map<String, dynamic>;
     } catch (e) {
       throw Exception('Failed to update about: ${e.toString()}');
     }

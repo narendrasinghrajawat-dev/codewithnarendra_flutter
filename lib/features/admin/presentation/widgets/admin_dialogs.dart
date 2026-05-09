@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../../../../core/widgets/common_text.dart';
 
 /// Confirmation dialog for delete operations
 class AdminDeleteDialog extends StatelessWidget {
@@ -18,6 +20,7 @@ class AdminDeleteDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return AlertDialog(
@@ -35,31 +38,24 @@ class AdminDeleteDialog extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
+            child: CommonText.medium(
               title,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : Colors.black87,
-              ),
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white : Colors.black87,
             ),
           ),
         ],
       ),
-      content: Text(
+      content: CommonText.small(
         '$message "$itemName"?',
-        style: TextStyle(
-          color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
-        ),
+        color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(
-            'Cancel',
-            style: TextStyle(
-              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-            ),
+          child: CommonText.small(
+            l10n.commonCancel,
+            color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
           ),
         ),
         FilledButton.icon(
@@ -68,7 +64,7 @@ class AdminDeleteDialog extends StatelessWidget {
             Navigator.of(context).pop();
           },
           icon: const Icon(Icons.delete, size: 18),
-          label: const Text('Delete'),
+          label: Text(l10n.commonDelete),
           style: FilledButton.styleFrom(
             backgroundColor: Colors.red,
             foregroundColor: Colors.white,
@@ -102,76 +98,85 @@ class AdminFormDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       backgroundColor: isDark ? Colors.grey.shade900 : Colors.white,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 500),
+        constraints: BoxConstraints(
+          maxWidth: 500,
+          maxHeight: MediaQuery.of(context).size.height * 0.8,
+        ),
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: isEditing
-                            ? Colors.orange.withOpacity(0.1)
-                            : Colors.green.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        isEditing ? Icons.edit : Icons.add,
-                        color: isEditing ? Colors.orange : Colors.green,
-                      ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: isEditing
+                          ? Colors.orange.withOpacity(0.1)
+                          : Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : Colors.black87,
-                            ),
+                    child: Icon(
+                      isEditing ? Icons.edit : Icons.add,
+                      color: isEditing ? Colors.orange : Colors.green,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CommonText.large(
+                          title,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                        if (subtitle != null)
+                          CommonText.verySmall(
+                            subtitle!,
+                            color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                           ),
-                          if (subtitle != null)
-                            Text(
-                              subtitle!,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-                              ),
-                            ),
-                        ],
-                      ),
+                      ],
                     ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: Icon(
-                        Icons.close,
-                        color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-                      ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: Icon(
+                      Icons.close,
+                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                     ),
-                  ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Scrollable form content
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Form(
+                    key: formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Form fields
+                        ...formFields,
+                      ],
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 24),
-                // Form fields
-                ...formFields,
-                const SizedBox(height: 24),
-                // Actions
-                Row(
+              ),
+              const SizedBox(height: 16),
+              // Actions
+              Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     OutlinedButton(
@@ -179,7 +184,7 @@ class AdminFormDialog extends StatelessWidget {
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       ),
-                      child: const Text('Cancel'),
+                      child: Text(l10n.commonCancel),
                     ),
                     const SizedBox(width: 12),
                     FilledButton.icon(
@@ -197,7 +202,7 @@ class AdminFormDialog extends StatelessWidget {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : Icon(isEditing ? Icons.save : Icons.add, size: 18),
-                      label: Text(isEditing ? 'Save Changes' : 'Create'),
+                      label: Text(isEditing ? l10n.actionUpdate : l10n.actionCreate),
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       ),
@@ -208,8 +213,7 @@ class AdminFormDialog extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 }
 
@@ -237,13 +241,10 @@ class AdminFormField extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text(
+            CommonText.small(
               label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: isDark ? Colors.grey.shade300 : Colors.grey.shade800,
-              ),
+              fontWeight: FontWeight.w500,
+              color: isDark ? Colors.grey.shade300 : Colors.grey.shade800,
             ),
             if (isRequired)
               Text(
@@ -259,12 +260,9 @@ class AdminFormField extends StatelessWidget {
         if (hint != null)
           Padding(
             padding: const EdgeInsets.only(top: 2, bottom: 8),
-            child: Text(
+            child: CommonText.verySmall(
               hint!,
-              style: TextStyle(
-                fontSize: 12,
-                color: isDark ? Colors.grey.shade500 : Colors.grey.shade500,
-              ),
+              color: isDark ? Colors.grey.shade500 : Colors.grey.shade500,
             ),
           )
         else
@@ -446,6 +444,7 @@ class AdminImagePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return InkWell(
@@ -477,11 +476,9 @@ class AdminImagePicker extends StatelessWidget {
                     color: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
                   ),
                   const SizedBox(height: 8),
-                  Text(
+                  CommonText.small(
                     placeholderText,
-                    style: TextStyle(
-                      color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
-                    ),
+                    color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
                   ),
                 ],
               )

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../../core/config/app_theme_colors.dart';
+import '../../../../core/widgets/common_text.dart';
 import '../../../../core/services/localization_service.dart';
 import '../../../projects/presentation/providers/project_provider.dart';
 import '../../../projects/presentation/providers/project_state.dart';
@@ -53,114 +55,84 @@ class _ProjectsManagementPageState extends ConsumerState<ProjectsManagementPage>
   Widget build(BuildContext context) {
     final projectState = ref.watch(projectStateProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final localizations = ref.watch(localizationStateProvider);
-    final isHindi = localizations.language == AppLanguage.hi;
+    final l10n = AppLocalizations.of(context)!;
 
     final projects = projectState.projects?['data'] as List<dynamic>? ?? [];
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        await ref.read(projectNotifierProvider.notifier).getProjects();
-      },
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(context, isDark, isHindi, projects.length),
-            const SizedBox(height: 20),
-            AdminDataTable(
-              columns: [
-                AdminDataColumn(
-                  key: 'title',
-                  title: isHindi ? 'शीर्षक' : 'Title',
-                  sortable: true,
+    return Scaffold(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await ref.read(projectNotifierProvider.notifier).getProjects();
+        },
+        child: projects.isEmpty && projectState.status != ProjectStatus.loading
+            ? Center(
+                child: CommonText.medium(
+                  l10n.noProjectsFound,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                 ),
-                AdminDataColumn(
-                  key: 'category',
-                  title: isHindi ? 'श्रेणी' : 'Category',
-                  sortable: true,
+              )
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: AdminDataTable(
+                  columns: [
+                    AdminDataColumn(
+                      key: 'title',
+                      title: l10n.name,
+                      sortable: true,
+                    ),
+                    AdminDataColumn(
+                      key: 'category',
+                      title: l10n.category,
+                      sortable: true,
+                    ),
+                    AdminDataColumn(
+                      key: 'technologies',
+                      title: l10n.technologiesLabel,
+                      sortable: false,
+                      cellBuilder: (row) => _buildTechChips(row['technologies'] ?? []),
+                    ),
+                    AdminDataColumn(
+                      key: 'isFeatured',
+                      title: l10n.featured,
+                      sortable: true,
+                      cellBuilder: (row) => _buildFeaturedChip(row['isFeatured'] ?? false),
+                    ),
+                  ],
+                  data: projects.cast<Map<String, dynamic>>(),
+                  isLoading: projectState.status == ProjectStatus.loading,
+                  emptyMessage: l10n.noProjectsFound,
+                  sortColumnIndex: _sortColumnIndex,
+                  sortAscending: _sortAscending,
+                  onSort: (columnKey, ascending) {
+                    setState(() {
+                      _sortColumnIndex = ['title', 'category', 'technologies', 'isFeatured'].indexOf(columnKey);
+                      _sortAscending = ascending;
+                    });
+                  },
+                  onEdit: (index, row) => _showEditDialog(context, row, l10n),
+                  onDelete: (index, row) => _showDeleteDialog(context, row, l10n),
                 ),
-                AdminDataColumn(
-                  key: 'technologies',
-                  title: isHindi ? 'तकनीकें' : 'Technologies',
-                  sortable: false,
-                  cellBuilder: (row) => _buildTechChips(row['technologies'] ?? []),
-                ),
-                AdminDataColumn(
-                  key: 'isFeatured',
-                  title: isHindi ? 'विशेष' : 'Featured',
-                  sortable: true,
-                  cellBuilder: (row) => _buildFeaturedChip(row['isFeatured'] ?? false),
-                ),
-              ],
-              data: projects.cast<Map<String, dynamic>>(),
-              isLoading: projectState.status == ProjectStatus.loading,
-              emptyMessage: isHindi ? 'कोई परियोजना नहीं मिली' : 'No projects found',
-              sortColumnIndex: _sortColumnIndex,
-              sortAscending: _sortAscending,
-              onSort: (columnKey, ascending) {
-                setState(() {
-                  _sortColumnIndex = ['title', 'category', 'technologies', 'isFeatured'].indexOf(columnKey);
-                  _sortAscending = ascending;
-                });
-              },
-              onEdit: (index, row) => _showEditDialog(context, row, isHindi),
-              onDelete: (index, row) => _showDeleteDialog(context, row, isHindi),
-            ),
-          ],
-        ),
+              ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showAddDialog(context, l10n),
+        icon: const Icon(Icons.add),
+        label: Text(l10n.addProject),
+        backgroundColor: AppThemeColors.primary,
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context, bool isDark, bool isHindi, int count) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              isHindi ? 'परियोजना प्रबंधन' : 'Projects Management',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '$count ${isHindi ? "परियोजनाएं" : "projects"} ${isHindi ? "पाई गईं" : "found"}',
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-              ),
-            ),
-          ],
-        ),
-        FilledButton.icon(
-          onPressed: () => _showAddDialog(context, isHindi),
-          icon: const Icon(Icons.add, size: 20),
-          label: Text(isHindi ? 'परियोजना जोड़ें' : 'Add Project'),
-          style: FilledButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildTechChips(List<dynamic> technologies) {
-    if (technologies.isEmpty) return const Text('-');
+    final l10n = AppLocalizations.of(context)!;
+    if (technologies.isEmpty) return Text(l10n.emptyDash);
     return Wrap(
       spacing: 4,
       runSpacing: 4,
       children: technologies.take(3).map((tech) {
         return Chip(
-          label: Text(
+          label: CommonText.verySmall(
             tech.toString(),
-            style: const TextStyle(fontSize: 10),
           ),
           backgroundColor: Colors.blue.shade100,
           padding: EdgeInsets.zero,
@@ -171,107 +143,105 @@ class _ProjectsManagementPageState extends ConsumerState<ProjectsManagementPage>
   }
 
   Widget _buildFeaturedChip(bool isFeatured) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: isFeatured ? Colors.green.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(
-        isFeatured ? 'Yes' : 'No',
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: isFeatured ? Colors.green : Colors.grey,
-        ),
+      child: CommonText.small(
+        isFeatured ? l10n.yes : l10n.no,
+        fontWeight: FontWeight.w600,
+        color: isFeatured ? Colors.green : Colors.grey,
       ),
     );
   }
 
-  void _showAddDialog(BuildContext context, bool isHindi) {
+  void _showAddDialog(BuildContext context, AppLocalizations l10n) {
     _clearControllers();
     
     showDialog(
       context: context,
       builder: (context) => AdminFormDialog(
-        title: isHindi ? 'परियोजना जोड़ें' : 'Add Project',
+        title: l10n.addProject,
         formKey: _formKey,
         formFields: [
           AdminFormField(
-            label: isHindi ? 'शीर्षक' : 'Title',
+            label: l10n.name,
             isRequired: true,
             child: AdminTextField(
               controller: _titleController,
-              hintText: isHindi ? 'उदाहरण: ई-कॉमर्स ऐप' : 'e.g., E-Commerce App',
-              validator: (value) => value?.isEmpty ?? true ? (isHindi ? 'शीर्षक आवश्यक है' : 'Title is required') : null,
+              hintText: l10n.projectTitleHint,
+              validator: (value) => value?.isEmpty ?? true ? l10n.nameRequired : null,
             ),
           ),
           AdminFormField(
-            label: isHindi ? 'विवरण' : 'Description',
+            label: l10n.description,
             isRequired: true,
             child: AdminTextField(
               controller: _descriptionController,
-              hintText: isHindi ? 'परियोजना का विवरण' : 'Project description',
+              hintText: l10n.projectDescriptionHint,
               maxLines: 3,
-              validator: (value) => value?.isEmpty ?? true ? (isHindi ? 'विवरण आवश्यक है' : 'Description is required') : null,
+              validator: (value) => value?.isEmpty ?? true ? l10n.descriptionRequired : null,
             ),
           ),
           AdminFormField(
-            label: isHindi ? 'श्रेणी' : 'Category',
+            label: l10n.category,
             isRequired: true,
             child: AdminTextField(
               controller: _categoryController,
-              hintText: isHindi ? 'उदाहरण: मोबाइल ऐप' : 'e.g., Mobile App',
-              validator: (value) => value?.isEmpty ?? true ? (isHindi ? 'श्रेणी आवश्यक है' : 'Category is required') : null,
+              hintText: l10n.categoryHint,
+              validator: (value) => value?.isEmpty ?? true ? l10n.categoryRequired : null,
             ),
           ),
           AdminFormField(
-            label: isHindi ? 'तकनीकें (कॉमा से अलग)' : 'Technologies (comma separated)',
+            label: l10n.technologiesLabel,
             isRequired: true,
             child: AdminTextField(
               controller: _technologiesController,
-              hintText: 'Flutter, Firebase, Node.js',
-              validator: (value) => value?.isEmpty ?? true ? (isHindi ? 'तकनीकें आवश्यक हैं' : 'Technologies are required') : null,
+              hintText: l10n.technologiesHint,
+              validator: (value) => value?.isEmpty ?? true ? l10n.technologiesRequired : null,
             ),
           ),
           AdminFormField(
-            label: isHindi ? 'परियोजना URL' : 'Project URL',
+            label: l10n.projectUrl,
             child: AdminTextField(
               controller: _projectUrlController,
-              hintText: 'https://example.com',
+              hintText: l10n.projectUrlHint,
               keyboardType: TextInputType.url,
             ),
           ),
           AdminFormField(
-            label: isHindi ? 'रिपॉजिटरी URL' : 'Repository URL',
+            label: l10n.repositoryUrl,
             child: AdminTextField(
               controller: _repositoryUrlController,
-              hintText: 'https://github.com/username/repo',
+              hintText: l10n.repositoryUrlHint,
               keyboardType: TextInputType.url,
             ),
           ),
           AdminFormField(
-            label: isHindi ? 'क्लाइंट' : 'Client',
+            label: l10n.client,
             child: AdminTextField(
               controller: _clientController,
-              hintText: isHindi ? 'क्लाइंट का नाम' : 'Client name',
+              hintText: l10n.clientHint,
             ),
           ),
           AdminFormField(
-            label: isHindi ? 'छवि URL' : 'Image URL',
+            label: l10n.imageUrl,
             child: AdminTextField(
               controller: _imageUrlController,
-              hintText: 'https://...',
+              hintText: l10n.imageUrlHint,
               keyboardType: TextInputType.url,
             ),
           ),
         ],
-        onSave: () => _createProject(isHindi),
+        onSave: () => _createProject(l10n),
       ),
     );
   }
 
-  void _showEditDialog(BuildContext context, Map<String, dynamic> project, bool isHindi) {
+  void _showEditDialog(BuildContext context, Map<String, dynamic> project, AppLocalizations l10n) {
     _titleController.text = project['title'] ?? '';
     _descriptionController.text = project['description'] ?? '';
     _categoryController.text = project['category'] ?? '';
@@ -284,84 +254,84 @@ class _ProjectsManagementPageState extends ConsumerState<ProjectsManagementPage>
     showDialog(
       context: context,
       builder: (context) => AdminFormDialog(
-        title: isHindi ? 'परियोजना संपादित करें' : 'Edit Project',
+        title: l10n.editProject,
         isEditing: true,
         formKey: _formKey,
         formFields: [
           AdminFormField(
-            label: isHindi ? 'शीर्षक' : 'Title',
+            label: l10n.name,
             isRequired: true,
             child: AdminTextField(
               controller: _titleController,
-              validator: (value) => value?.isEmpty ?? true ? (isHindi ? 'शीर्षक आवश्यक है' : 'Title is required') : null,
+              validator: (value) => value?.isEmpty ?? true ? l10n.nameRequired : null,
             ),
           ),
           AdminFormField(
-            label: isHindi ? 'विवरण' : 'Description',
+            label: l10n.description,
             isRequired: true,
             child: AdminTextField(
               controller: _descriptionController,
               maxLines: 3,
-              validator: (value) => value?.isEmpty ?? true ? (isHindi ? 'विवरण आवश्यक है' : 'Description is required') : null,
+              validator: (value) => value?.isEmpty ?? true ? l10n.descriptionRequired : null,
             ),
           ),
           AdminFormField(
-            label: isHindi ? 'श्रेणी' : 'Category',
+            label: l10n.category,
             isRequired: true,
             child: AdminTextField(
               controller: _categoryController,
-              validator: (value) => value?.isEmpty ?? true ? (isHindi ? 'श्रेणी आवश्यक है' : 'Category is required') : null,
+              validator: (value) => value?.isEmpty ?? true ? l10n.categoryRequired : null,
             ),
           ),
           AdminFormField(
-            label: isHindi ? 'तकनीकें (कॉमा से अलग)' : 'Technologies (comma separated)',
+            label: l10n.technologiesLabel,
             isRequired: true,
             child: AdminTextField(
               controller: _technologiesController,
-              validator: (value) => value?.isEmpty ?? true ? (isHindi ? 'तकनीकें आवश्यक हैं' : 'Technologies are required') : null,
+              validator: (value) => value?.isEmpty ?? true ? l10n.technologiesRequired : null,
             ),
           ),
           AdminFormField(
-            label: isHindi ? 'परियोजना URL' : 'Project URL',
+            label: l10n.projectUrl,
             child: AdminTextField(
               controller: _projectUrlController,
               keyboardType: TextInputType.url,
             ),
           ),
           AdminFormField(
-            label: isHindi ? 'रिपॉजिटरी URL' : 'Repository URL',
+            label: l10n.repositoryUrl,
             child: AdminTextField(
               controller: _repositoryUrlController,
               keyboardType: TextInputType.url,
             ),
           ),
           AdminFormField(
-            label: isHindi ? 'क्लाइंट' : 'Client',
+            label: l10n.client,
             child: AdminTextField(
               controller: _clientController,
             ),
           ),
           AdminFormField(
-            label: isHindi ? 'छवि URL' : 'Image URL',
+            label: l10n.imageUrl,
             child: AdminTextField(
               controller: _imageUrlController,
               keyboardType: TextInputType.url,
             ),
           ),
         ],
-        onSave: () => _updateProject(project['_id'], isHindi),
+        onSave: () => _updateProject(project['_id'], l10n),
       ),
     );
   }
 
-  void _showDeleteDialog(BuildContext context, Map<String, dynamic> project, bool isHindi) {
+  void _showDeleteDialog(BuildContext context, Map<String, dynamic> project, AppLocalizations l10n) {
     showDialog(
       context: context,
       builder: (context) => AdminDeleteDialog(
-        title: isHindi ? 'परियोजना हटाएं' : 'Delete Project',
-        message: isHindi ? 'क्या आप वाकई इस परियोजना को हटाना चाहते हैं' : 'Are you sure you want to delete',
+        title: l10n.deleteProject,
+        message: l10n.deleteConfirmMessage,
         itemName: project['title'] ?? '',
-        onConfirm: () => _deleteProject(project['_id'], isHindi),
+        onConfirm: () => _deleteProject(project['_id'], l10n),
       ),
     );
   }
@@ -377,7 +347,7 @@ class _ProjectsManagementPageState extends ConsumerState<ProjectsManagementPage>
     _imageUrlController.clear();
   }
 
-  Future<void> _createProject(bool isHindi) async {
+  Future<void> _createProject(AppLocalizations l10n) async {
     final data = {
       'title': _titleController.text,
       'description': _descriptionController.text,
@@ -397,7 +367,7 @@ class _ProjectsManagementPageState extends ConsumerState<ProjectsManagementPage>
       if (projectState.status == ProjectStatus.error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${getLocalizedString('projectAddFailed', isHindi ? AppLanguage.hi : AppLanguage.en)}: ${projectState.errorMessage}'),
+            content: Text('${l10n.projectAddFailed}: ${projectState.errorMessage}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -405,7 +375,7 @@ class _ProjectsManagementPageState extends ConsumerState<ProjectsManagementPage>
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(getLocalizedString('projectAdded', isHindi ? AppLanguage.hi : AppLanguage.en)),
+            content: Text(l10n.projectAdded),
             backgroundColor: Colors.green,
           ),
         );
@@ -413,7 +383,7 @@ class _ProjectsManagementPageState extends ConsumerState<ProjectsManagementPage>
     }
   }
 
-  Future<void> _updateProject(String id, bool isHindi) async {
+  Future<void> _updateProject(String id, AppLocalizations l10n) async {
     final data = {
       'title': _titleController.text,
       'description': _descriptionController.text,
@@ -432,7 +402,7 @@ class _ProjectsManagementPageState extends ConsumerState<ProjectsManagementPage>
       if (projectState.status == ProjectStatus.error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${getLocalizedString('projectUpdateFailed', isHindi ? AppLanguage.hi : AppLanguage.en)}: ${projectState.errorMessage}'),
+            content: Text('${l10n.projectUpdateFailed}: ${projectState.errorMessage}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -440,7 +410,7 @@ class _ProjectsManagementPageState extends ConsumerState<ProjectsManagementPage>
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(getLocalizedString('projectUpdated', isHindi ? AppLanguage.hi : AppLanguage.en)),
+            content: Text(l10n.projectUpdated),
             backgroundColor: Colors.green,
           ),
         );
@@ -448,7 +418,7 @@ class _ProjectsManagementPageState extends ConsumerState<ProjectsManagementPage>
     }
   }
 
-  Future<void> _deleteProject(String id, bool isHindi) async {
+  Future<void> _deleteProject(String id, AppLocalizations l10n) async {
     await ref.read(projectNotifierProvider.notifier).deleteProject(id);
     
     if (mounted) {
@@ -456,15 +426,15 @@ class _ProjectsManagementPageState extends ConsumerState<ProjectsManagementPage>
       if (projectState.status == ProjectStatus.error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${getLocalizedString('projectDeleteFailed', isHindi ? AppLanguage.hi : AppLanguage.en)}: ${projectState.errorMessage}'),
+            content: Text('${l10n.projectDeleteFailed}: ${projectState.errorMessage}'),
             backgroundColor: Colors.red,
           ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(getLocalizedString('projectDeleted', isHindi ? AppLanguage.hi : AppLanguage.en)),
-            backgroundColor: Colors.red,
+            content: Text(l10n.projectDeleted),
+            backgroundColor: Colors.green,
           ),
         );
       }

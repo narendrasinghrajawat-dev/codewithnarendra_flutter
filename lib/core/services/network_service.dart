@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -65,14 +67,24 @@ class NetworkService {
           final exception = _handleError(error);
           print('Error: ${exception.toString()}');
           
-          // Handle 401 Unauthorized - redirect to login (prevent multiple calls)
+          // Handle 401 Unauthorized - redirect to login only if it's a token error (prevent multiple calls)
           if (error.response?.statusCode == 401 && _onUnauthorized != null && !_isHandlingUnauthorized) {
-            _isHandlingUnauthorized = true;
-            _onUnauthorized!();
-            // Reset after a delay to allow future handling
-            Future.delayed(const Duration(seconds: 2), () {
-              _isHandlingUnauthorized = false;
-            });
+            // Check if it's a token validation error, not a permission error
+            final errorMessage = error.response?.data['message']?.toString().toLowerCase() ?? '';
+            final isPermissionError = errorMessage.contains('you can only update') ||
+                                    errorMessage.contains('you can only delete') ||
+                                    errorMessage.contains('forbidden') ||
+                                    errorMessage.contains('not the owner');
+            
+            // Only logout if it's not a permission error
+            if (!isPermissionError) {
+              _isHandlingUnauthorized = true;
+              _onUnauthorized!();
+              // Reset after a delay to allow future handling
+              Future.delayed(const Duration(seconds: 2), () {
+                _isHandlingUnauthorized = false;
+              });
+            }
           }
           
           // Create new DioException with the converted error
@@ -166,6 +178,16 @@ class NetworkService {
       );
       print('GET SUCCESS: ${response.statusCode}');
       print('GET RESPONSE DATA: ${response.data}');
+      
+      // Handle null/empty responses
+      if (response.data == null) {
+        print('WARNING: Response data is null');
+      } else if (response.data is Map && (response.data as Map)['data'] == null) {
+        print('WARNING: Response data field is null');
+      } else if (response.data is Map && (response.data as Map)['data'] is List && ((response.data as Map)['data'] as List).isEmpty) {
+        print('INFO: Response data list is empty');
+      }
+      
       return response;
     } on DioException catch (e) {
       print('GET ERROR: ${e.message}');
@@ -181,7 +203,8 @@ class NetworkService {
     Options? options,
   }) async {
     print('POST called: $path');
-    print('POST data: $data');
+    print('POST data: ${JsonEncoder().convert(data)}');
+    
 
     try {
       final response = await _dio.post<T>(
@@ -192,9 +215,20 @@ class NetworkService {
       );
       print('POST SUCCESS: ${response.statusCode}');
       print('POST RESPONSE: ${response.data}');
+      
+      // Handle null/empty responses
+      if (response.data == null) {
+        print('WARNING: POST Response data is null');
+      } else if (response.data is Map && (response.data as Map)['data'] == null) {
+        print('WARNING: POST Response data field is null');
+      } else if (response.data is Map && (response.data as Map)['data'] is List && ((response.data as Map)['data'] as List).isEmpty) {
+        print('INFO: POST Response data list is empty');
+      }
+      
       return response;
     } on DioException catch (e) {
       print('POST ERROR: ${e.message}');
+      print('POST ERROR TYPE: ${e.type}');
       throw _handleError(e);
     }
   }
@@ -205,6 +239,10 @@ class NetworkService {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) async {
+
+    print('PUT called: $path');
+    print('PUT data: ${JsonEncoder().convert(data)}');
+     
     try {
       final response = await _dio.put<T>(
         path,
@@ -212,9 +250,22 @@ class NetworkService {
         queryParameters: queryParameters,
         options: options,
       );
-      print('PUT response: ${response.data}');
+      print('PUT SUCCESS: ${response.statusCode}');
+      print('PUT RESPONSE: ${response.data}');
+      
+      // Handle null/empty responses
+      if (response.data == null) {
+        print('WARNING: PUT Response data is null');
+      } else if (response.data is Map && (response.data as Map)['data'] == null) {
+        print('WARNING: PUT Response data field is null');
+      } else if (response.data is Map && (response.data as Map)['data'] is List && ((response.data as Map)['data'] as List).isEmpty) {
+        print('INFO: PUT Response data list is empty');
+      }
+      
       return response;
     } on DioException catch (e) {
+      print('PUT ERROR: ${e.message}');
+      print('PUT ERROR TYPE: ${e.type}');
       throw _handleError(e);
     }
   }
@@ -225,6 +276,7 @@ class NetworkService {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) async {
+    print('DELETE called: $path');
     try {
       final response = await _dio.delete<T>(
         path,
@@ -232,9 +284,22 @@ class NetworkService {
         queryParameters: queryParameters,
         options: options,
       );
-      print('DELETE response: ${response.data}');
+      print('DELETE SUCCESS: ${response.statusCode}');
+      print('DELETE RESPONSE: ${response.data}');
+      
+      // Handle null/empty responses
+      if (response.data == null) {
+        print('WARNING: DELETE Response data is null');
+      } else if (response.data is Map && (response.data as Map)['data'] == null) {
+        print('WARNING: DELETE Response data field is null');
+      } else if (response.data is Map && (response.data as Map)['data'] is List && ((response.data as Map)['data'] as List).isEmpty) {
+        print('INFO: DELETE Response data list is empty');
+      }
+      
       return response;
     } on DioException catch (e) {
+      print('DELETE ERROR: ${e.message}');
+      print('DELETE ERROR TYPE: ${e.type}');
       throw _handleError(e);
     }
   }

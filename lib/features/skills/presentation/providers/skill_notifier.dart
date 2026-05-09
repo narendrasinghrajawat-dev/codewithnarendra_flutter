@@ -43,11 +43,9 @@ class SkillNotifier extends StateNotifier<SkillState> {
     state = state.copyWith(status: SkillStatus.loading);
     
     try {
-      final createdSkill = await _createSkillUseCase(data);
-      state = state.copyWith(
-        status: SkillStatus.loaded,
-        skills: createdSkill,
-      );
+      await _createSkillUseCase(data);
+      // Refresh skills list after creating
+      await getSkills();
     } catch (e) {
       state = state.copyWith(
         status: SkillStatus.error,
@@ -60,11 +58,9 @@ class SkillNotifier extends StateNotifier<SkillState> {
     state = state.copyWith(status: SkillStatus.loading);
     
     try {
-      final updatedSkill = await _updateSkillUseCase(id, data);
-      state = state.copyWith(
-        status: SkillStatus.loaded,
-        skills: updatedSkill,
-      );
+      await _updateSkillUseCase(id, data);
+      // Refresh skills list after updating
+      await getSkills();
     } catch (e) {
       state = state.copyWith(
         status: SkillStatus.error,
@@ -78,10 +74,8 @@ class SkillNotifier extends StateNotifier<SkillState> {
     
     try {
       await _deleteSkillUseCase(id);
-      state = state.copyWith(
-        status: SkillStatus.loaded,
-        skills: null,
-      );
+      // Refresh skills list after deleting
+      await getSkills();
     } catch (e) {
       state = state.copyWith(
         status: SkillStatus.error,

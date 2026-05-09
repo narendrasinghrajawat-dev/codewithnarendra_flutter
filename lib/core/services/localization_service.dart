@@ -611,6 +611,161 @@ String getLocalizedString(String key, AppLanguage language) {
         case AppLanguage.hi:
           return 'संपर्क सहेजने में विफल';
       }
+    // Admin Keys
+    case 'adminPortal':
+      switch (language) {
+        case AppLanguage.en:
+          return 'Admin Portal';
+        case AppLanguage.hi:
+          return 'एडमिन पोर्टल';
+      }
+    case 'adminDashboardTitle':
+      switch (language) {
+        case AppLanguage.en:
+          return 'MyFolio Admin Dashboard';
+        case AppLanguage.hi:
+          return 'मायफोलियो एडमिन डैशबोर्ड';
+      }
+    case 'adminLogin':
+      switch (language) {
+        case AppLanguage.en:
+          return 'Admin Login';
+        case AppLanguage.hi:
+          return 'एडमिन लॉगिन';
+      }
+    case 'enterAdminEmail':
+      switch (language) {
+        case AppLanguage.en:
+          return 'Enter admin email';
+        case AppLanguage.hi:
+          return 'एडमिन ईमेल दर्ज करें';
+      }
+    case 'enterAdminPassword':
+      switch (language) {
+        case AppLanguage.en:
+          return 'Enter admin password';
+        case AppLanguage.hi:
+          return 'एडमिन पासवर्ड दर्ज करें';
+      }
+    case 'fieldRequired':
+      switch (language) {
+        case AppLanguage.en:
+          return 'This field is required';
+        case AppLanguage.hi:
+          return 'यह फ़ील्ड आवश्यक है';
+      }
+    case 'invalidEmail':
+      switch (language) {
+        case AppLanguage.en:
+          return 'Invalid email address';
+        case AppLanguage.hi:
+          return 'अमान्य ईमेल पता';
+      }
+    case 'passwordMinLength':
+      switch (language) {
+        case AppLanguage.en:
+          return 'Password must be at least 8 characters';
+        case AppLanguage.hi:
+          return 'पासवर्ड कम से कम 8 अक्षर का होना चाहिए';
+      }
+    case 'welcome':
+      switch (language) {
+        case AppLanguage.en:
+          return 'Welcome';
+        case AppLanguage.hi:
+          return 'स्वागत है';
+      }
+    case 'managePortfolioContent':
+      switch (language) {
+        case AppLanguage.en:
+          return 'Manage your portfolio content';
+        case AppLanguage.hi:
+          return 'अपने पोर्टफोलियो सामग्री प्रबंधित करें';
+      }
+    case 'logout':
+      switch (language) {
+        case AppLanguage.en:
+          return 'Logout';
+        case AppLanguage.hi:
+          return 'लॉगआउट';
+      }
+    case 'total':
+      switch (language) {
+        case AppLanguage.en:
+          return 'Total';
+        case AppLanguage.hi:
+          return 'कुल';
+      }
+    case 'addSkill':
+      switch (language) {
+        case AppLanguage.en:
+          return 'Add Skill';
+        case AppLanguage.hi:
+          return 'कौशल जोड़ें';
+      }
+    case 'addProject':
+      switch (language) {
+        case AppLanguage.en:
+          return 'Add Project';
+        case AppLanguage.hi:
+          return 'परियोजना जोड़ें';
+      }
+    case 'addEducation':
+      switch (language) {
+        case AppLanguage.en:
+          return 'Add Education';
+        case AppLanguage.hi:
+          return 'शिक्षा जोड़ें';
+      }
+    case 'addService':
+      switch (language) {
+        case AppLanguage.en:
+          return 'Add Service';
+        case AppLanguage.hi:
+          return 'सेवा जोड़ें';
+      }
+    case 'quickActions':
+      switch (language) {
+        case AppLanguage.en:
+          return 'Quick Actions';
+        case AppLanguage.hi:
+          return 'त्वरित कार्रवाई';
+      }
+    case 'systemStatus':
+      switch (language) {
+        case AppLanguage.en:
+          return 'System Status';
+        case AppLanguage.hi:
+          return 'सिस्टम स्थिति';
+      }
+    case 'apiServer':
+      switch (language) {
+        case AppLanguage.en:
+          return 'API Server';
+        case AppLanguage.hi:
+          return 'API सर्वर';
+      }
+    case 'database':
+      switch (language) {
+        case AppLanguage.en:
+          return 'Database';
+        case AppLanguage.hi:
+          return 'डेटाबेस';
+      }
+    case 'storage':
+      switch (language) {
+        case AppLanguage.en:
+          return 'Storage';
+        case AppLanguage.hi:
+          return 'स्टोरेज';
+      }
+    case 'welcomeAdmin':
+      switch (language) {
+        case AppLanguage.en:
+          return 'Welcome, Admin!';
+        case AppLanguage.hi:
+          return 'स्वागत है, व्यवस्थापक!';
+      }
     default:
       return key;
   }

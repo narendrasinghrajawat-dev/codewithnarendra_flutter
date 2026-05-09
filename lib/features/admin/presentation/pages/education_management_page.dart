@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../../../../core/config/app_theme_colors.dart';
+import '../../../../core/widgets/common_text.dart';
 import '../../../../core/services/localization_service.dart';
 import '../../../education/presentation/providers/education_provider.dart';
 import '../../../education/presentation/providers/education_state.dart';
@@ -48,170 +51,140 @@ class _EducationManagementPageState extends ConsumerState<EducationManagementPag
   Widget build(BuildContext context) {
     final educationState = ref.watch(educationStateProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final localizations = ref.watch(localizationStateProvider);
-    final isHindi = localizations.language == AppLanguage.hi;
+    final l10n = AppLocalizations.of(context)!;
 
     final education = educationState.educationList?['data'] as List<dynamic>? ?? [];
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        await ref.read(educationNotifierProvider.notifier).getEducation();
-      },
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(context, isDark, isHindi, education.length),
-            const SizedBox(height: 20),
-            AdminDataTable(
-              columns: [
-                AdminDataColumn(
-                  key: 'institution',
-                  title: isHindi ? 'संस्थान' : 'Institution',
-                  sortable: true,
+    return Scaffold(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await ref.read(educationNotifierProvider.notifier).getEducation();
+        },
+        child: education.isEmpty && educationState.status != EducationStatus.loading
+            ? Center(
+                child: CommonText.medium(
+                  l10n.noEducationFound,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                 ),
-                AdminDataColumn(
-                  key: 'degree',
-                  title: isHindi ? 'डिग्री' : 'Degree',
-                  sortable: true,
+              )
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: AdminDataTable(
+                  columns: [
+                    AdminDataColumn(
+                      key: 'institution',
+                      title: l10n.institution,
+                      sortable: true,
+                    ),
+                    AdminDataColumn(
+                      key: 'degree',
+                      title: l10n.degree,
+                      sortable: true,
+                    ),
+                    AdminDataColumn(
+                      key: 'field',
+                      title: l10n.field,
+                      sortable: true,
+                    ),
+                    AdminDataColumn(
+                      key: 'duration',
+                      title: l10n.startDate,
+                      sortable: false,
+                      cellBuilder: (row) => Text(
+                        '${row['startDate'] ?? ''} - ${row['endDate'] ?? l10n.present}',
+                      ),
+                    ),
+                  ],
+                  data: education.cast<Map<String, dynamic>>(),
+                  isLoading: educationState.status == EducationStatus.loading,
+                  emptyMessage: l10n.noEducationFound,
+                  sortColumnIndex: _sortColumnIndex,
+                  sortAscending: _sortAscending,
+                  onSort: (columnKey, ascending) {
+                    setState(() {
+                      _sortColumnIndex = ['institution', 'degree', 'field', 'duration'].indexOf(columnKey);
+                      _sortAscending = ascending;
+                    });
+                  },
+                  onEdit: (index, row) => _showEditDialog(context, row, l10n),
+                  onDelete: (index, row) => _showDeleteDialog(context, row, l10n),
                 ),
-                AdminDataColumn(
-                  key: 'field',
-                  title: isHindi ? 'क्षेत्र' : 'Field',
-                  sortable: true,
-                ),
-                AdminDataColumn(
-                  key: 'duration',
-                  title: isHindi ? 'अवधि' : 'Duration',
-                  sortable: false,
-                  cellBuilder: (row) => Text(
-                    '${row['startDate'] ?? ''} - ${row['endDate'] ?? (isHindi ? "वर्तमान" : "Present")}',
-                  ),
-                ),
-              ],
-              data: education.cast<Map<String, dynamic>>(),
-              isLoading: educationState.status == EducationStatus.loading,
-              emptyMessage: isHindi ? 'कोई शिक्षा नहीं मिली' : 'No education found',
-              sortColumnIndex: _sortColumnIndex,
-              sortAscending: _sortAscending,
-              onSort: (columnKey, ascending) {
-                setState(() {
-                  _sortColumnIndex = ['institution', 'degree', 'field', 'duration'].indexOf(columnKey);
-                  _sortAscending = ascending;
-                });
-              },
-              onEdit: (index, row) => _showEditDialog(context, row, isHindi),
-              onDelete: (index, row) => _showDeleteDialog(context, row, isHindi),
-            ),
-          ],
-        ),
+              ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showAddDialog(context, l10n),
+        icon: const Icon(Icons.add),
+        label: Text(l10n.addEducation),
+        backgroundColor: AppThemeColors.primary,
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context, bool isDark, bool isHindi, int count) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              isHindi ? 'शिक्षा प्रबंधन' : 'Education Management',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '$count ${isHindi ? "शिक्षा" : "education"} ${isHindi ? "पाई गई" : "found"}',
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-              ),
-            ),
-          ],
-        ),
-        FilledButton.icon(
-          onPressed: () => _showAddDialog(context, isHindi),
-          icon: const Icon(Icons.add, size: 20),
-          label: Text(isHindi ? 'शिक्षा जोड़ें' : 'Add Education'),
-          style: FilledButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showAddDialog(BuildContext context, bool isHindi) {
+  void _showAddDialog(BuildContext context, AppLocalizations l10n) {
     _clearControllers();
     
     showDialog(
       context: context,
       builder: (context) => AdminFormDialog(
-        title: isHindi ? 'शिक्षा जोड़ें' : 'Add Education',
+        title: l10n.addEducation,
         formKey: _formKey,
         formFields: [
           AdminFormField(
-            label: isHindi ? 'संस्थान' : 'Institution',
+            label: l10n.institution,
             isRequired: true,
             child: AdminTextField(
               controller: _institutionController,
-              hintText: isHindi ? 'उदाहरण: हार्वर्ड विश्वविद्यालय' : 'e.g., Harvard University',
-              validator: (value) => value?.isEmpty ?? true ? (isHindi ? 'संस्थान आवश्यक है' : 'Institution is required') : null,
+              hintText: l10n.institutionHint,
+              validator: (value) => value?.isEmpty ?? true ? l10n.institutionRequired : null,
             ),
           ),
           AdminFormField(
-            label: isHindi ? 'डिग्री' : 'Degree',
+            label: l10n.degree,
             isRequired: true,
             child: AdminTextField(
               controller: _degreeController,
-              hintText: isHindi ? 'उदाहरण: बैचलर ऑफ साइंस' : 'e.g., Bachelor of Science',
-              validator: (value) => value?.isEmpty ?? true ? (isHindi ? 'डिग्री आवश्यक है' : 'Degree is required') : null,
+              hintText: l10n.degreeHint,
+              validator: (value) => value?.isEmpty ?? true ? l10n.degreeRequired : null,
             ),
           ),
           AdminFormField(
-            label: isHindi ? 'क्षेत्र' : 'Field',
+            label: l10n.field,
             isRequired: true,
             child: AdminTextField(
               controller: _fieldController,
-              hintText: isHindi ? 'उदाहरण: कंप्यूटर साइंस' : 'e.g., Computer Science',
-              validator: (value) => value?.isEmpty ?? true ? (isHindi ? 'क्षेत्र आवश्यक है' : 'Field is required') : null,
+              hintText: l10n.fieldHint,
+              validator: (value) => value?.isEmpty ?? true ? l10n.fieldRequired : null,
             ),
           ),
           AdminFormField(
-            label: isHindi ? 'प्रारंभ तिथि' : 'Start Date',
+            label: l10n.startDate,
             child: AdminTextField(
               controller: _startDateController,
-              hintText: 'YYYY-MM-DD',
+              hintText: l10n.dateHint,
             ),
           ),
           AdminFormField(
-            label: isHindi ? 'समाप्ति तिथि' : 'End Date',
+            label: l10n.endDate,
             child: AdminTextField(
               controller: _endDateController,
-              hintText: 'YYYY-MM-DD',
+              hintText: l10n.dateHint,
             ),
           ),
           AdminFormField(
-            label: isHindi ? 'विवरण' : 'Description',
+            label: l10n.description,
             child: AdminTextField(
               controller: _descriptionController,
-              hintText: isHindi ? 'अतिरिक्त विवरण...' : 'Additional details...',
+              hintText: l10n.descriptionHint,
               maxLines: 3,
             ),
           ),
         ],
-        onSave: () => _createEducation(isHindi),
+        onSave: () => _createEducation(l10n),
       ),
     );
   }
 
-  void _showEditDialog(BuildContext context, Map<String, dynamic> education, bool isHindi) {
+  void _showEditDialog(BuildContext context, Map<String, dynamic> education, AppLocalizations l10n) {
     _institutionController.text = education['institution'] ?? '';
     _degreeController.text = education['degree'] ?? '';
     _fieldController.text = education['field'] ?? '';
@@ -222,67 +195,67 @@ class _EducationManagementPageState extends ConsumerState<EducationManagementPag
     showDialog(
       context: context,
       builder: (context) => AdminFormDialog(
-        title: isHindi ? 'शिक्षा संपादित करें' : 'Edit Education',
+        title: l10n.editEducation,
         isEditing: true,
         formKey: _formKey,
         formFields: [
           AdminFormField(
-            label: isHindi ? 'संस्थान' : 'Institution',
+            label: l10n.institution,
             isRequired: true,
             child: AdminTextField(
               controller: _institutionController,
-              validator: (value) => value?.isEmpty ?? true ? (isHindi ? 'संस्थान आवश्यक है' : 'Institution is required') : null,
+              validator: (value) => value?.isEmpty ?? true ? l10n.institutionRequired : null,
             ),
           ),
           AdminFormField(
-            label: isHindi ? 'डिग्री' : 'Degree',
+            label: l10n.degree,
             isRequired: true,
             child: AdminTextField(
               controller: _degreeController,
-              validator: (value) => value?.isEmpty ?? true ? (isHindi ? 'डिग्री आवश्यक है' : 'Degree is required') : null,
+              validator: (value) => value?.isEmpty ?? true ? l10n.degreeRequired : null,
             ),
           ),
           AdminFormField(
-            label: isHindi ? 'क्षेत्र' : 'Field',
+            label: l10n.field,
             isRequired: true,
             child: AdminTextField(
               controller: _fieldController,
-              validator: (value) => value?.isEmpty ?? true ? (isHindi ? 'क्षेत्र आवश्यक है' : 'Field is required') : null,
+              validator: (value) => value?.isEmpty ?? true ? l10n.fieldRequired : null,
             ),
           ),
           AdminFormField(
-            label: isHindi ? 'प्रारंभ तिथि' : 'Start Date',
+            label: l10n.startDate,
             child: AdminTextField(
               controller: _startDateController,
             ),
           ),
           AdminFormField(
-            label: isHindi ? 'समाप्ति तिथि' : 'End Date',
+            label: l10n.endDate,
             child: AdminTextField(
               controller: _endDateController,
             ),
           ),
           AdminFormField(
-            label: isHindi ? 'विवरण' : 'Description',
+            label: l10n.description,
             child: AdminTextField(
               controller: _descriptionController,
               maxLines: 3,
             ),
           ),
         ],
-        onSave: () => _updateEducation(education['_id'], isHindi),
+        onSave: () => _updateEducation(education['_id'], l10n),
       ),
     );
   }
 
-  void _showDeleteDialog(BuildContext context, Map<String, dynamic> education, bool isHindi) {
+  void _showDeleteDialog(BuildContext context, Map<String, dynamic> education, AppLocalizations l10n) {
     showDialog(
       context: context,
       builder: (context) => AdminDeleteDialog(
-        title: isHindi ? 'शिक्षा हटाएं' : 'Delete Education',
-        message: isHindi ? 'क्या आप वाकई इस शिक्षा को हटाना चाहते हैं' : 'Are you sure you want to delete',
+        title: l10n.deleteEducation,
+        message: l10n.deleteConfirmMessage,
         itemName: education['institution'] ?? '',
-        onConfirm: () => _deleteEducation(education['_id'], isHindi),
+        onConfirm: () => _deleteEducation(education['_id'], l10n),
       ),
     );
   }
@@ -296,7 +269,7 @@ class _EducationManagementPageState extends ConsumerState<EducationManagementPag
     _descriptionController.clear();
   }
 
-  Future<void> _createEducation(bool isHindi) async {
+  Future<void> _createEducation(AppLocalizations l10n) async {
     final data = {
       'institution': _institutionController.text,
       'degree': _degreeController.text,
@@ -313,7 +286,7 @@ class _EducationManagementPageState extends ConsumerState<EducationManagementPag
       if (educationState.status == EducationStatus.error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${getLocalizedString('educationAddFailed', isHindi ? AppLanguage.hi : AppLanguage.en)}: ${educationState.errorMessage}'),
+            content: Text('${l10n.educationAddFailed}: ${educationState.errorMessage}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -321,7 +294,7 @@ class _EducationManagementPageState extends ConsumerState<EducationManagementPag
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(getLocalizedString('educationAdded', isHindi ? AppLanguage.hi : AppLanguage.en)),
+            content: Text(l10n.educationAdded),
             backgroundColor: Colors.green,
           ),
         );
@@ -329,7 +302,7 @@ class _EducationManagementPageState extends ConsumerState<EducationManagementPag
     }
   }
 
-  Future<void> _updateEducation(String id, bool isHindi) async {
+  Future<void> _updateEducation(String id, AppLocalizations l10n) async {
     final data = {
       'institution': _institutionController.text,
       'degree': _degreeController.text,
@@ -346,7 +319,7 @@ class _EducationManagementPageState extends ConsumerState<EducationManagementPag
       if (educationState.status == EducationStatus.error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${getLocalizedString('educationUpdateFailed', isHindi ? AppLanguage.hi : AppLanguage.en)}: ${educationState.errorMessage}'),
+            content: Text('${l10n.educationUpdateFailed}: ${educationState.errorMessage}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -354,7 +327,7 @@ class _EducationManagementPageState extends ConsumerState<EducationManagementPag
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(getLocalizedString('educationUpdated', isHindi ? AppLanguage.hi : AppLanguage.en)),
+            content: Text(l10n.educationUpdated),
             backgroundColor: Colors.green,
           ),
         );
@@ -362,7 +335,7 @@ class _EducationManagementPageState extends ConsumerState<EducationManagementPag
     }
   }
 
-  Future<void> _deleteEducation(String id, bool isHindi) async {
+  Future<void> _deleteEducation(String id, AppLocalizations l10n) async {
     await ref.read(educationNotifierProvider.notifier).deleteEducation(id);
     
     if (mounted) {
@@ -370,15 +343,15 @@ class _EducationManagementPageState extends ConsumerState<EducationManagementPag
       if (educationState.status == EducationStatus.error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${getLocalizedString('educationDeleteFailed', isHindi ? AppLanguage.hi : AppLanguage.en)}: ${educationState.errorMessage}'),
+            content: Text('${l10n.educationDeleteFailed}: ${educationState.errorMessage}'),
             backgroundColor: Colors.red,
           ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(getLocalizedString('educationDeleted', isHindi ? AppLanguage.hi : AppLanguage.en)),
-            backgroundColor: Colors.red,
+            content: Text(l10n.educationDeleted),
+            backgroundColor: Colors.green,
           ),
         );
       }

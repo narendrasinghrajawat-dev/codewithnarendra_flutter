@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../../core/config/app_theme_colors.dart';
-import '../../../../core/services/localization_service.dart';
+import '../../../../core/widgets/common_text.dart';
 import '../../../skills/presentation/providers/skill_provider.dart';
 import '../../../skills/presentation/providers/skill_state.dart';
 import '../widgets/admin_data_table.dart';
@@ -46,105 +47,73 @@ class _SkillsManagementPageState extends ConsumerState<SkillsManagementPage> {
   Widget build(BuildContext context) {
     final skillState = ref.watch(skillStateProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final localizations = ref.watch(localizationStateProvider);
-    final isHindi = localizations.language == AppLanguage.hi;
+    final l10n = AppLocalizations.of(context)!;
 
     final skills = skillState.skills?['data'] as List<dynamic>? ?? [];
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        await ref.read(skillNotifierProvider.notifier).getSkills();
-      },
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with add button
-            _buildHeader(context, isDark, isHindi, skills.length),
-            const SizedBox(height: 20),
-            // Data Table
-            AdminDataTable(
-              columns: [
-                AdminDataColumn(
-                  key: 'name',
-                  title: getLocalizedString('name', isHindi ? AppLanguage.hi : AppLanguage.en),
-                  sortable: true,
+    return Scaffold(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await ref.read(skillNotifierProvider.notifier).getSkills();
+        },
+        child: skills.isEmpty && skillState.status != SkillStatus.loading
+            ? Center(
+                child: CommonText.medium(
+                  l10n.noSkillsFound,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                 ),
-                AdminDataColumn(
-                  key: 'category',
-                  title: getLocalizedString('category', isHindi ? AppLanguage.hi : AppLanguage.en),
-                  sortable: true,
+              )
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: AdminDataTable(
+                  columns: [
+                    AdminDataColumn(
+                      key: 'name',
+                      title: l10n.name,
+                      sortable: true,
+                    ),
+                    AdminDataColumn(
+                      key: 'category',
+                      title: l10n.category,
+                      sortable: true,
+                    ),
+                    AdminDataColumn(
+                      key: 'level',
+                      title: l10n.level,
+                      sortable: true,
+                      cellBuilder: (row) => _buildLevelChip(row['level'] ?? 'Beginner'),
+                    ),
+                    AdminDataColumn(
+                      key: 'yearsOfExperience',
+                      title: l10n.experience,
+                      sortable: true,
+                      cellBuilder: (row) => Text(
+                        '${row['yearsOfExperience'] ?? 0} ${l10n.years}',
+                      ),
+                    ),
+                  ],
+                  data: skills.cast<Map<String, dynamic>>(),
+                  isLoading: skillState.status == SkillStatus.loading,
+                  emptyMessage: l10n.noSkillsFound,
+                  sortColumnIndex: _sortColumnIndex,
+                  sortAscending: _sortAscending,
+                  onSort: (columnKey, ascending) {
+                    setState(() {
+                      _sortColumnIndex = ['name', 'category', 'level', 'yearsOfExperience'].indexOf(columnKey);
+                      _sortAscending = ascending;
+                    });
+                  },
+                  onEdit: (index, row) => _showEditDialog(context, row, l10n),
+                  onDelete: (index, row) => _showDeleteDialog(context, row, l10n),
                 ),
-                AdminDataColumn(
-                  key: 'level',
-                  title: getLocalizedString('level', isHindi ? AppLanguage.hi : AppLanguage.en),
-                  sortable: true,
-                  cellBuilder: (row) => _buildLevelChip(row['level'] ?? 'Beginner'),
-                ),
-                AdminDataColumn(
-                  key: 'yearsOfExperience',
-                  title: getLocalizedString('experience', isHindi ? AppLanguage.hi : AppLanguage.en),
-                  sortable: true,
-                  cellBuilder: (row) => Text(
-                    '${row['yearsOfExperience'] ?? 0} ${getLocalizedString('years', isHindi ? AppLanguage.hi : AppLanguage.en)}',
-                  ),
-                ),
-              ],
-              data: skills.cast<Map<String, dynamic>>(),
-              isLoading: skillState.status == SkillStatus.loading,
-              emptyMessage: getLocalizedString('noSkillsFound', isHindi ? AppLanguage.hi : AppLanguage.en),
-              sortColumnIndex: _sortColumnIndex,
-              sortAscending: _sortAscending,
-              onSort: (columnKey, ascending) {
-                setState(() {
-                  _sortColumnIndex = ['name', 'category', 'level', 'yearsOfExperience'].indexOf(columnKey);
-                  _sortAscending = ascending;
-                });
-              },
-              onEdit: (index, row) => _showEditDialog(context, row, isHindi),
-              onDelete: (index, row) => _showDeleteDialog(context, row, isHindi),
-            ),
-          ],
-        ),
+              ),
       ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, bool isDark, bool isHindi, int count) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              getLocalizedString('skillsManagement', isHindi ? AppLanguage.hi : AppLanguage.en),
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '$count ${getLocalizedString('skills', isHindi ? AppLanguage.hi : AppLanguage.en)} ${getLocalizedString('skillsFound', isHindi ? AppLanguage.hi : AppLanguage.en)}',
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-              ),
-            ),
-          ],
-        ),
-        FilledButton.icon(
-          onPressed: () => _showAddDialog(context, isHindi),
-          icon: const Icon(Icons.add, size: 20),
-          label: Text(getLocalizedString('addSkill', isHindi ? AppLanguage.hi : AppLanguage.en)),
-          style: FilledButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          ),
-        ),
-      ],
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showAddDialog(context, l10n),
+        icon: const Icon(Icons.add),
+        label: Text(l10n.addSkill),
+        backgroundColor: AppThemeColors.primary,
+      ),
     );
   }
 
@@ -156,13 +125,10 @@ class _SkillsManagementPageState extends ConsumerState<SkillsManagementPage> {
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(
+      child: CommonText.small(
         level,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
+        fontWeight: FontWeight.w600,
+        color: color,
       ),
     );
   }
@@ -182,49 +148,49 @@ class _SkillsManagementPageState extends ConsumerState<SkillsManagementPage> {
     }
   }
 
-  void _showAddDialog(BuildContext context, bool isHindi) {
+  void _showAddDialog(BuildContext context, AppLocalizations l10n) {
     _clearControllers();
     
     showDialog(
       context: context,
       builder: (context) => AdminFormDialog(
-        title: getLocalizedString('addSkill', isHindi ? AppLanguage.hi : AppLanguage.en),
+        title: l10n.addSkill,
         formKey: _formKey,
         formFields: [
           AdminFormField(
-            label: getLocalizedString('name', isHindi ? AppLanguage.hi : AppLanguage.en),
+            label: l10n.name,
             isRequired: true,
             child: AdminTextField(
               controller: _nameController,
-              hintText: getLocalizedString('nameHint', isHindi ? AppLanguage.hi : AppLanguage.en),
+              hintText: l10n.nameHint,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return getLocalizedString('nameRequired', isHindi ? AppLanguage.hi : AppLanguage.en);
+                  return l10n.nameRequired;
                 }
                 return null;
               },
             ),
           ),
           AdminFormField(
-            label: getLocalizedString('category', isHindi ? AppLanguage.hi : AppLanguage.en),
+            label: l10n.category,
             isRequired: true,
             child: AdminTextField(
               controller: _categoryController,
-              hintText: getLocalizedString('categoryHint', isHindi ? AppLanguage.hi : AppLanguage.en),
+              hintText: l10n.categoryHint,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return getLocalizedString('categoryRequired', isHindi ? AppLanguage.hi : AppLanguage.en);
+                  return l10n.categoryRequired;
                 }
                 return null;
               },
             ),
           ),
           AdminFormField(
-            label: getLocalizedString('level', isHindi ? AppLanguage.hi : AppLanguage.en),
+            label: l10n.level,
             isRequired: true,
             child: AdminDropdownField<String>(
               value: _levelController.text.isEmpty ? 'Beginner' : _levelController.text,
-              hint: getLocalizedString('selectLevel', isHindi ? AppLanguage.hi : AppLanguage.en),
+              hint: l10n.selectLevel,
               items: ['Beginner', 'Intermediate', 'Advanced', 'Expert']
                   .map((level) => DropdownMenuItem(
                         value: level,
@@ -238,74 +204,76 @@ class _SkillsManagementPageState extends ConsumerState<SkillsManagementPage> {
               },
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return getLocalizedString('levelRequired', isHindi ? AppLanguage.hi : AppLanguage.en);
+                  return l10n.levelRequired;
                 }
                 return null;
               },
             ),
           ),
           AdminFormField(
-            label: getLocalizedString('experienceYears', isHindi ? AppLanguage.hi : AppLanguage.en),
+            label: l10n.experienceYears,
             isRequired: true,
             child: AdminTextField(
               controller: _yearsController,
-              hintText: '3',
+              hintText: l10n.experienceYears,
               keyboardType: TextInputType.number,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return getLocalizedString('experienceRequired', isHindi ? AppLanguage.hi : AppLanguage.en);
+                  return l10n.experienceRequired;
                 }
                 return null;
               },
             ),
           ),
         ],
-        onSave: () => _createSkill(isHindi),
+        onSave: () => _createSkill(l10n),
       ),
     );
   }
 
-  void _showEditDialog(BuildContext context, Map<String, dynamic> skill, bool isHindi) {
+  void _showEditDialog(BuildContext context, Map<String, dynamic> skill, AppLocalizations l10n) {
     _nameController.text = skill['name'] ?? '';
     _categoryController.text = skill['category'] ?? '';
-    _levelController.text = skill['level'] ?? 'Beginner';
+    // Capitalize first letter to match dropdown items
+    final level = skill['level'] ?? 'Beginner';
+    _levelController.text = level.isNotEmpty ? level[0].toUpperCase() + level.substring(1) : 'Beginner';
     _yearsController.text = (skill['yearsOfExperience'] ?? 0).toString();
 
     showDialog(
       context: context,
       builder: (context) => AdminFormDialog(
-        title: getLocalizedString('editSkill', isHindi ? AppLanguage.hi : AppLanguage.en),
+        title: l10n.editSkill,
         isEditing: true,
         formKey: _formKey,
         formFields: [
           AdminFormField(
-            label: getLocalizedString('name', isHindi ? AppLanguage.hi : AppLanguage.en),
+            label: l10n.name,
             isRequired: true,
             child: AdminTextField(
               controller: _nameController,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return getLocalizedString('nameRequired', isHindi ? AppLanguage.hi : AppLanguage.en);
+                  return l10n.nameRequired;
                 }
                 return null;
               },
             ),
           ),
           AdminFormField(
-            label: getLocalizedString('category', isHindi ? AppLanguage.hi : AppLanguage.en),
+            label: l10n.category,
             isRequired: true,
             child: AdminTextField(
               controller: _categoryController,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return getLocalizedString('categoryRequired', isHindi ? AppLanguage.hi : AppLanguage.en);
+                  return l10n.categoryRequired;
                 }
                 return null;
               },
             ),
           ),
           AdminFormField(
-            label: getLocalizedString('level', isHindi ? AppLanguage.hi : AppLanguage.en),
+            label: l10n.level,
             isRequired: true,
             child: AdminDropdownField<String>(
               value: _levelController.text,
@@ -322,40 +290,40 @@ class _SkillsManagementPageState extends ConsumerState<SkillsManagementPage> {
               },
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return getLocalizedString('levelRequired', isHindi ? AppLanguage.hi : AppLanguage.en);
+                  return l10n.levelRequired;
                 }
                 return null;
               },
             ),
           ),
           AdminFormField(
-            label: getLocalizedString('experienceYears', isHindi ? AppLanguage.hi : AppLanguage.en),
+            label: l10n.experienceYears,
             isRequired: true,
             child: AdminTextField(
               controller: _yearsController,
               keyboardType: TextInputType.number,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return getLocalizedString('experienceRequired', isHindi ? AppLanguage.hi : AppLanguage.en);
+                  return l10n.experienceRequired;
                 }
                 return null;
               },
             ),
           ),
         ],
-        onSave: () => _updateSkill(skill['_id'], isHindi),
+        onSave: () => _updateSkill(skill['_id'], l10n),
       ),
     );
   }
 
-  void _showDeleteDialog(BuildContext context, Map<String, dynamic> skill, bool isHindi) {
+  void _showDeleteDialog(BuildContext context, Map<String, dynamic> skill, AppLocalizations l10n) {
     showDialog(
       context: context,
       builder: (context) => AdminDeleteDialog(
-        title: getLocalizedString('deleteSkill', isHindi ? AppLanguage.hi : AppLanguage.en),
-        message: getLocalizedString('deleteSkillConfirm', isHindi ? AppLanguage.hi : AppLanguage.en),
+        title: l10n.deleteSkill,
+        message: l10n.deleteSkillConfirm,
         itemName: skill['name'] ?? '',
-        onConfirm: () => _deleteSkill(skill['_id'], isHindi),
+        onConfirm: () => _deleteSkill(skill['_id'], l10n),
       ),
     );
   }
@@ -367,11 +335,11 @@ class _SkillsManagementPageState extends ConsumerState<SkillsManagementPage> {
     _yearsController.clear();
   }
 
-  Future<void> _createSkill(bool isHindi) async {
+  Future<void> _createSkill(AppLocalizations l10n) async {
     final data = {
-      'name': _nameController.text,
-      'category': _categoryController.text,
-      'level': _levelController.text,
+      'name': _nameController.text.trim(),
+      'category': _categoryController.text.trim(),
+      'level': _levelController.text.toLowerCase().trim(),
       'yearsOfExperience': int.tryParse(_yearsController.text) ?? 0,
     };
 
@@ -382,7 +350,7 @@ class _SkillsManagementPageState extends ConsumerState<SkillsManagementPage> {
       if (skillState.status == SkillStatus.error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${getLocalizedString('skillAddFailed', isHindi ? AppLanguage.hi : AppLanguage.en)}: ${skillState.errorMessage}'),
+            content: Text('${l10n.skillAddFailed}: ${skillState.errorMessage}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -390,7 +358,7 @@ class _SkillsManagementPageState extends ConsumerState<SkillsManagementPage> {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(getLocalizedString('skillAdded', isHindi ? AppLanguage.hi : AppLanguage.en)),
+            content: Text(l10n.skillAdded),
             backgroundColor: Colors.green,
           ),
         );
@@ -398,11 +366,11 @@ class _SkillsManagementPageState extends ConsumerState<SkillsManagementPage> {
     }
   }
 
-  Future<void> _updateSkill(String id, bool isHindi) async {
+  Future<void> _updateSkill(String id, AppLocalizations l10n) async {
     final data = {
-      'name': _nameController.text,
-      'category': _categoryController.text,
-      'level': _levelController.text,
+      'name': _nameController.text.trim(),
+      'category': _categoryController.text.trim(),
+      'level': _levelController.text.toLowerCase().trim(),
       'yearsOfExperience': int.tryParse(_yearsController.text) ?? 0,
     };
 
@@ -413,7 +381,7 @@ class _SkillsManagementPageState extends ConsumerState<SkillsManagementPage> {
       if (skillState.status == SkillStatus.error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${getLocalizedString('skillUpdateFailed', isHindi ? AppLanguage.hi : AppLanguage.en)}: ${skillState.errorMessage}'),
+            content: Text('${l10n.skillUpdateFailed}: ${skillState.errorMessage}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -421,7 +389,7 @@ class _SkillsManagementPageState extends ConsumerState<SkillsManagementPage> {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(getLocalizedString('skillUpdated', isHindi ? AppLanguage.hi : AppLanguage.en)),
+            content: Text(l10n.skillUpdated),
             backgroundColor: Colors.green,
           ),
         );
@@ -429,7 +397,7 @@ class _SkillsManagementPageState extends ConsumerState<SkillsManagementPage> {
     }
   }
 
-  Future<void> _deleteSkill(String id, bool isHindi) async {
+  Future<void> _deleteSkill(String id, AppLocalizations l10n) async {
     await ref.read(skillNotifierProvider.notifier).deleteSkill(id);
     
     if (mounted) {
@@ -437,15 +405,15 @@ class _SkillsManagementPageState extends ConsumerState<SkillsManagementPage> {
       if (skillState.status == SkillStatus.error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${getLocalizedString('skillDeleteFailed', isHindi ? AppLanguage.hi : AppLanguage.en)}: ${skillState.errorMessage}'),
+            content: Text('${l10n.skillDeleteFailed}: ${skillState.errorMessage}'),
             backgroundColor: Colors.red,
           ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(getLocalizedString('skillDeleted', isHindi ? AppLanguage.hi : AppLanguage.en)),
-            backgroundColor: Colors.red,
+            content: Text(l10n.skillDeleted),
+            backgroundColor: Colors.green,
           ),
         );
       }

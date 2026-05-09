@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../../../../core/config/app_theme_colors.dart';
+import '../../../../core/widgets/common_text.dart';
 import '../../../../core/services/localization_service.dart';
 import '../../../services/presentation/providers/service_provider.dart';
 import '../../../services/presentation/providers/service_state.dart';
@@ -46,99 +49,71 @@ class _ServicesManagementPageState extends ConsumerState<ServicesManagementPage>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final language = ref.watch(currentLanguageProvider);
     final isHindi = language == AppLanguage.hi;
+    final l10n = AppLocalizations.of(context)!;
 
     final services = serviceState.services;
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        await ref.read(serviceNotifierProvider.notifier).getServices();
-      },
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(context, isDark, isHindi, services.length),
-            const SizedBox(height: 20),
-            AdminDataTable(
-              columns: [
-                AdminDataColumn(
-                  key: 'title',
-                  title: getLocalizedString('title', isHindi ? AppLanguage.hi : AppLanguage.en),
-                  sortable: true,
-                  cellBuilder: (row) => _buildServiceTitle(row),
+    return Scaffold(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await ref.read(serviceNotifierProvider.notifier).getServices();
+        },
+        child: services.isEmpty && serviceState.status != ServiceStatus.loading
+            ? Center(
+                child: CommonText.medium(
+                  l10n.noServicesFound,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                 ),
-                AdminDataColumn(
-                  key: 'description',
-                  title: getLocalizedString('description', isHindi ? AppLanguage.hi : AppLanguage.en),
-                  sortable: false,
-                  cellBuilder: (row) => Text(
-                    row['description'] ?? '',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+              )
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: AdminDataTable(
+                  columns: [
+                    AdminDataColumn(
+                      key: 'title',
+                      title: getLocalizedString('title', isHindi ? AppLanguage.hi : AppLanguage.en),
+                      sortable: true,
+                      cellBuilder: (row) => _buildServiceTitle(row),
+                    ),
+                    AdminDataColumn(
+                      key: 'description',
+                      title: getLocalizedString('description', isHindi ? AppLanguage.hi : AppLanguage.en),
+                      sortable: false,
+                      cellBuilder: (row) => Text(
+                        row['description'] ?? '',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    AdminDataColumn(
+                      key: 'icon',
+                      title: getLocalizedString('icon', isHindi ? AppLanguage.hi : AppLanguage.en),
+                      sortable: true,
+                      cellBuilder: (row) => _buildIconPreview(row['icon'], row['color']),
+                    ),
+                  ],
+                  data: services.map((s) => s.toJson()..['_id'] = s.id).toList(),
+                  isLoading: serviceState.status == ServiceStatus.loading,
+                  emptyMessage: getLocalizedString('noServicesFound', isHindi ? AppLanguage.hi : AppLanguage.en),
+                  sortColumnIndex: _sortColumnIndex,
+                  sortAscending: _sortAscending,
+                  onSort: (columnKey, ascending) {
+                    setState(() {
+                      _sortColumnIndex = ['title', 'description', 'icon'].indexOf(columnKey);
+                      _sortAscending = ascending;
+                    });
+                  },
+                  onEdit: (index, row) => _showEditDialog(context, row, isHindi),
+                  onDelete: (index, row) => _showDeleteDialog(context, row, isHindi),
                 ),
-                AdminDataColumn(
-                  key: 'icon',
-                  title: getLocalizedString('icon', isHindi ? AppLanguage.hi : AppLanguage.en),
-                  sortable: true,
-                  cellBuilder: (row) => _buildIconPreview(row['icon'], row['color']),
-                ),
-              ],
-              data: services.map((s) => s.toJson()..['_id'] = s.id).toList(),
-              isLoading: serviceState.status == ServiceStatus.loading,
-              emptyMessage: getLocalizedString('noServicesFound', isHindi ? AppLanguage.hi : AppLanguage.en),
-              sortColumnIndex: _sortColumnIndex,
-              sortAscending: _sortAscending,
-              onSort: (columnKey, ascending) {
-                setState(() {
-                  _sortColumnIndex = ['title', 'description', 'icon'].indexOf(columnKey);
-                  _sortAscending = ascending;
-                });
-              },
-              onEdit: (index, row) => _showEditDialog(context, row, isHindi),
-              onDelete: (index, row) => _showDeleteDialog(context, row, isHindi),
-            ),
-          ],
-        ),
+              ),
       ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, bool isDark, bool isHindi, int count) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              getLocalizedString('servicesManagement', isHindi ? AppLanguage.hi : AppLanguage.en),
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '$count ${getLocalizedString('servicesFound', isHindi ? AppLanguage.hi : AppLanguage.en)}',
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-              ),
-            ),
-          ],
-        ),
-        FilledButton.icon(
-          onPressed: () => _showAddDialog(context, isHindi),
-          icon: const Icon(Icons.add, size: 20),
-          label: Text(getLocalizedString('addService', isHindi ? AppLanguage.hi : AppLanguage.en)),
-          style: FilledButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          ),
-        ),
-      ],
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showAddDialog(context, isHindi),
+        icon: const Icon(Icons.add),
+        label: Text(l10n.addService),
+        backgroundColor: AppThemeColors.primary,
+      ),
     );
   }
 
@@ -148,9 +123,9 @@ class _ServicesManagementPageState extends ConsumerState<ServicesManagementPage>
         _buildIconPreview(row['icon'], row['color'], size: 24),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(
+          child: CommonText.small(
             row['title'] ?? '',
-            style: const TextStyle(fontWeight: FontWeight.w600),
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],
@@ -369,7 +344,7 @@ class _ServicesManagementPageState extends ConsumerState<ServicesManagementPage>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(getLocalizedString('serviceDeleted', isHindi ? AppLanguage.hi : AppLanguage.en)),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.green,
           ),
         );
       }
